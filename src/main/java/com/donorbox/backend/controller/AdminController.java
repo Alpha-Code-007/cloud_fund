@@ -49,16 +49,19 @@ public class AdminController {
         return ResponseEntity.ok(cause);
     }
 
-    @PostMapping("/causes")
-    @Operation(summary = "Admin - Create cause", description = "Create a new cause")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Cause created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data")
-    })
-    public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
-        Cause createdCause = causeService.createCause(cause);
-        return new ResponseEntity<>(createdCause, HttpStatus.CREATED);
+@PostMapping("/causes")
+@Operation(summary = "Admin - Create cause", description = "Create a new cause")
+@ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Cause created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+})
+public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
+    if (cause.getTitle() == null || cause.getDescription() == null || cause.getTargetAmount() == null) {
+        return ResponseEntity.badRequest().build();
     }
+    Cause createdCause = causeService.createCause(cause);
+    return new ResponseEntity<>(createdCause, HttpStatus.CREATED);
+}
 
     @PutMapping("/causes/{id}")
     @Operation(summary = "Admin - Update cause", description = "Update an existing cause")
