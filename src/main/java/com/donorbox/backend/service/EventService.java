@@ -14,7 +14,9 @@ public class EventService {
     private final EventRepository eventRepository;
 
     @Transactional(readOnly = true)
-    public List<Event> getAllEvents() {
+public List<Event> getAllEvents() {
+    List<Event> events = eventRepository.findAll();
+    System.out.println("Events retrieved: " + events.size());
         return eventRepository.findAll();
     }
 

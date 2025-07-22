@@ -14,6 +14,7 @@ com\donorbox\backend\entity\Message.class
 com\donorbox\backend\repository\MessageRepository.class
 com\donorbox\backend\entity\Cause$CauseStatus.class
 com\donorbox\backend\entity\User.class
+com\donorbox\backend\dto\EventRequest.class
 com\donorbox\backend\dto\DonationRequest$DonationRequestBuilder.class
 com\donorbox\backend\entity\Donation.class
 com\donorbox\backend\controller\PublicController.class

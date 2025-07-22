@@ -44,7 +44,9 @@ public class DonationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Donation> getAllDonations() {
+public List<Donation> getAllDonations() {
+    List<Donation> donations = donationRepository.findAll();
+    System.out.println("Donations retrieved: " + donations.size());
         return donationRepository.findAll();
     }
 }

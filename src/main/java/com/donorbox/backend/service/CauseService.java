@@ -17,7 +17,9 @@ public class CauseService {
     private final DonationRepository donationRepository;
 
     @Transactional(readOnly = true)
-    public List<Cause> getAllCauses() {
+public List<Cause> getAllCauses() {
+    List<Cause> causes = causeRepository.findAll();
+    System.out.println("Causes retrieved: " + causes.size());
         return causeRepository.findAll();
     }
 
