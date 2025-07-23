@@ -4,18 +4,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.donorbox.backend.repository.*;
 import com.donorbox.backend.entity.*;
-import com.donorbox.backend.dto.*;
 import lombok.RequiredArgsConstructor;
-
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CauseService {
     private final CauseRepository causeRepository;
-    private final DonationRepository donationRepository;
-
     @Transactional(readOnly = true)
 public List<Cause> getAllCauses() {
     List<Cause> causes = causeRepository.findAll();
@@ -35,7 +30,7 @@ public List<Cause> getAllCauses() {
     }
 
     @Transactional
-    public Cause updateCause(Long id, Cause cause) {
+    public Cause updateCause(Long id, Cause cause) { 
         Cause existingCause = getCauseById(id);
         existingCause.setTitle(cause.getTitle());
         existingCause.setDescription(cause.getDescription());

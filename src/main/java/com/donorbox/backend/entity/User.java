@@ -10,7 +10,6 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Entity
 @Table(name = "users")
