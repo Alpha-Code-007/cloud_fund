@@ -8,6 +8,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,7 +33,9 @@ public class AdminController {
     // Admin Causes Management
     @GetMapping("/causes")
     @Operation(summary = "Admin - Get all causes", description = "Retrieve all causes for admin management")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved causes")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved causes", 
+                 content = @Content(mediaType = "application/json", 
+                                  array = @ArraySchema(schema = @Schema(implementation = Cause.class))))
     public ResponseEntity<List<Cause>> getAllCauses() {
         List<Cause> causes = causeService.getAllCauses();
         return ResponseEntity.ok(causes);
@@ -39,7 +44,9 @@ public class AdminController {
     @GetMapping("/causes/{id}")
     @Operation(summary = "Admin - Get cause by ID", description = "Retrieve specific cause for admin")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved cause"),
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved cause",
+                        content = @Content(mediaType = "application/json", 
+                                         schema = @Schema(implementation = Cause.class))),
             @ApiResponse(responseCode = "404", description = "Cause not found")
     })
     public ResponseEntity<Cause> getCauseById(
@@ -66,7 +73,9 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
     @PutMapping("/causes/{id}")
     @Operation(summary = "Admin - Update cause", description = "Update an existing cause")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Cause updated successfully"),
+            @ApiResponse(responseCode = "200", description = "Cause updated successfully",
+                        content = @Content(mediaType = "application/json", 
+                                         schema = @Schema(implementation = Cause.class))),
             @ApiResponse(responseCode = "404", description = "Cause not found"),
             @ApiResponse(responseCode = "400", description = "Invalid request data")
     })

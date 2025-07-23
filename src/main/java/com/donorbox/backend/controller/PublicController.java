@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -46,7 +47,9 @@ public class PublicController {
 
     @GetMapping("/donations")
     @Operation(summary = "Get all donations", description = "Retrieve all donation records")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved donations")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved donations",
+                 content = @Content(mediaType = "application/json", 
+                                  array = @ArraySchema(schema = @Schema(implementation = Donation.class))))
     public ResponseEntity<List<Donation>> getAllDonations() {
         List<Donation> donations = donationService.getAllDonations();
         return ResponseEntity.ok(donations);
@@ -64,7 +67,9 @@ public class PublicController {
     @GetMapping("/causes/{id}")
     @Operation(summary = "Get cause by ID", description = "Retrieve detailed information about a specific cause")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved cause"),
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved cause",
+                        content = @Content(mediaType = "application/json", 
+                                         schema = @Schema(implementation = Cause.class))),
             @ApiResponse(responseCode = "404", description = "Cause not found")
     })
     public ResponseEntity<Cause> getCauseById(
