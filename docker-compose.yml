@@ -26,8 +26,8 @@ services:
         condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/donorbox_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_USERNAME:cloud_fund_user 
+      SPRING_DATASOURCE_PASSWORD:mL6Xuc48KpPPubIEexv0FlIir2ORJ8M0
       SPRING_PROFILES_ACTIVE: production
     ports:
       - "8080:8080"
