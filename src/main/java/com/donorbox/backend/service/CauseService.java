@@ -11,6 +11,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CauseService {
     private final CauseRepository causeRepository;
+    private final ImageUploadService imageUploadService;
     @Transactional(readOnly = true)
 public List<Cause> getAllCauses() {
     List<Cause> causes = causeRepository.findAll();
@@ -46,6 +47,15 @@ public List<Cause> getAllCauses() {
 
     @Transactional
     public void deleteCause(Long id) {
+        // Get the cause to check if it has an image
+        Cause cause = getCauseById(id);
+        
+        // Delete associated image if exists
+        if (cause.getImageUrl() != null && !cause.getImageUrl().trim().isEmpty()) {
+            imageUploadService.deleteImage(cause.getImageUrl());
+        }
+        
+        // Delete the cause from database
         causeRepository.deleteById(id);
     }
 }

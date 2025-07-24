@@ -12,6 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EventService {
     private final EventRepository eventRepository;
+    private final ImageUploadService imageUploadService;
 
     @Transactional(readOnly = true)
 public List<Event> getAllEvents() {
@@ -47,6 +48,15 @@ public List<Event> getAllEvents() {
 
     @Transactional
     public void deleteEvent(Long id) {
+        // Get the event to check if it has an image
+        Event event = getEventById(id);
+        
+        // Delete associated image if exists
+        if (event.getImageUrl() != null && !event.getImageUrl().trim().isEmpty()) {
+            imageUploadService.deleteImage(event.getImageUrl());
+        }
+        
+        // Delete the event from database
         eventRepository.deleteById(id);
     }
 }
