@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Public API", description = "Public endpoints for frontend")
 public class PublicController {
 
@@ -156,12 +158,32 @@ public class PublicController {
             request.getOrderId(),
             request.getPaymentId(),
             request.getSignature(),
-            request.getDonorName(),
             request.getDonorEmail(),
+            request.getDonorName(),
             request.getAmount(),
             request.getCurrency(),
-request.getCauseName()
+            request.getCauseName()
         );
+        
+        // Update donation status if payment verification is successful
+        if (isVerified && request.getCauseId() != null) {
+            try {
+                // Find donation by order ID and update status
+                Donation donation = donationService.findByOrderId(request.getOrderId());
+                if (donation != null) {
+                    donationService.updateDonationStatus(
+                        donation.getId(), 
+                        Donation.DonationStatus.COMPLETED,
+                        request.getPaymentId(),
+                        request.getOrderId()
+                    );
+                }
+            } catch (Exception e) {
+                log.error("Error updating donation status for order: {}", request.getOrderId(), e);
+                // Don't fail payment verification due to status update issues
+            }
+        }
+        
         return ResponseEntity.ok(isVerified);
     }
 }

@@ -44,9 +44,31 @@ public class DonationService {
     }
 
     @Transactional(readOnly = true)
-public List<Donation> getAllDonations() {
-    List<Donation> donations = donationRepository.findAll();
-    System.out.println("Donations retrieved: " + donations.size());
+    public List<Donation> getAllDonations() {
+        List<Donation> donations = donationRepository.findAll();
+        System.out.println("Donations retrieved: " + donations.size());
         return donationRepository.findAll();
+    }
+    
+    @Transactional
+    public Donation updateDonationStatus(Long donationId, Donation.DonationStatus status, String paymentId, String orderId) {
+        Donation donation = donationRepository.findById(donationId)
+                .orElseThrow(() -> new IllegalArgumentException("Donation not found with id: " + donationId));
+        
+        donation.setStatus(status);
+        if (paymentId != null) {
+            donation.setPaymentId(paymentId);
+        }
+        if (orderId != null) {
+            donation.setOrderId(orderId);
+        }
+        
+        return donationRepository.save(donation);
+    }
+    
+    @Transactional(readOnly = true)
+    public Donation findByOrderId(String orderId) {
+        return donationRepository.findByOrderId(orderId)
+                .orElse(null);
     }
 }
