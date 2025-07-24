@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -177,6 +178,80 @@ public class PublicController {
         return ResponseEntity.ok(currencies);
     }
 
+    @PostMapping("/payment/create-order")
+    @Operation(summary = "Create payment order", description = "Create a Razorpay order for processing payment")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Payment order created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    public ResponseEntity<java.util.Map<String, Object>> createPaymentOrder(
+            @RequestParam BigDecimal amount,
+            @RequestParam(defaultValue = "USD") String currency,
+            @RequestParam String receiptId) {
+        try {
+            com.razorpay.Order order = paymentService.createOrder(amount, currency, receiptId);
+            
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("orderId", order.get("id"));
+            response.put("amount", order.get("amount"));
+            response.put("currency", order.get("currency"));
+            response.put("receipt", order.get("receipt"));
+            response.put("status", order.get("status"));
+            
+            // log.info("Payment order created successfully: {}", order.get("id"));
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            log.error("Error creating payment order", e);
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("error", "Failed to create payment order: " + e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/donate-and-pay")
+    @Operation(summary = "Create donation and payment order", 
+               description = "Create a donation record and corresponding Razorpay payment order")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Donation created and payment order generated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    public ResponseEntity<java.util.Map<String, Object>> createDonationAndPaymentOrder(@Valid @RequestBody DonationRequest request) {
+        try {
+            // Create the donation
+            Donation donation = donationService.createDonation(request);
+            
+            // Generate a unique receipt ID using donation ID
+            String receiptId = "DON_" + donation.getId() + "_" + System.currentTimeMillis();
+            
+            // Create Razorpay order
+            com.razorpay.Order order = paymentService.createOrder(request.getAmount(), request.getCurrency(), receiptId);
+            
+            // Update donation with order ID
+            donationService.updateDonationWithOrderId(donation.getId(), order.get("id").toString());
+            
+            // Prepare response
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("donationId", donation.getId());
+            response.put("orderId", order.get("id"));
+            response.put("amount", order.get("amount"));
+            response.put("currency", order.get("currency"));
+            response.put("receipt", order.get("receipt"));
+            response.put("status", order.get("status"));
+            response.put("donorName", donation.getDonorName());
+            response.put("donorEmail", donation.getDonorEmail());
+            response.put("causeName", donation.getCause() != null ? donation.getCause().getTitle() : "General Donation");
+            
+            log.info("Donation created with ID: {} and payment order: {}", donation.getId(), order.get("id"));
+            
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            log.error("Error creating donation and payment order", e);
+            java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("error", "Failed to create donation and payment order: " + e.getMessage());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping("/payment/verify")
     @Operation(summary = "Verify payment", description = "Verify payment transaction and send notification emails")
     @ApiResponses(value = {
@@ -198,7 +273,7 @@ public class PublicController {
         );
         
         // Update donation status if payment verification is successful
-        if (isVerified && request.getCauseId() != null) {
+        if (isVerified) {
             try {
                 // Find donation by order ID and update status
                 Donation donation = donationService.findByOrderId(request.getOrderId());
@@ -209,6 +284,7 @@ public class PublicController {
                         request.getPaymentId(),
                         request.getOrderId()
                     );
+                    log.info("Donation status updated to COMPLETED for order: {}", request.getOrderId());
                 }
             } catch (Exception e) {
                 log.error("Error updating donation status for order: {}", request.getOrderId(), e);
