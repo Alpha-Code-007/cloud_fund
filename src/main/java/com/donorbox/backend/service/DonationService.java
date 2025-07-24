@@ -71,4 +71,13 @@ public class DonationService {
         return donationRepository.findByOrderId(orderId)
                 .orElse(null);
     }
+    
+    @Transactional
+    public Donation updateDonationWithOrderId(Long donationId, String orderId) {
+        Donation donation = donationRepository.findById(donationId)
+                .orElseThrow(() -> new IllegalArgumentException("Donation not found with id: " + donationId));
+        
+        donation.setOrderId(orderId);
+        return donationRepository.save(donation);
+    }
 }
