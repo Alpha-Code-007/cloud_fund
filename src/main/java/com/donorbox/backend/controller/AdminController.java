@@ -177,7 +177,7 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
             @ApiResponse(responseCode = "201", description = "Cause created successfully with image"),
             @ApiResponse(responseCode = "400", description = "Invalid request data or image upload failed")
     })
-    public ResponseEntity<Cause> createCauseWithImage(
+    public ResponseEntity<Cause> createCauseWithImage(
             @Parameter(description = "Cause title") @RequestParam("title") String title,
             @Parameter(description = "Cause description") @RequestParam("description") String description,
             @Parameter(description = "Short description") @RequestParam(value = "shortDescription", required = false) String shortDescription,
