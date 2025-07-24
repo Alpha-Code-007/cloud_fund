@@ -142,4 +142,26 @@ public class PublicController {
         java.util.Map<String, String> currencies = paymentService.getSupportedCurrencies();
         return ResponseEntity.ok(currencies);
     }
+
+    @PostMapping("/payment/verify")
+    @Operation(summary = "Verify payment", description = "Verify payment transaction and send notification emails")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Payment verification completed",
+                        content = @Content(mediaType = "application/json",
+                                         schema = @Schema(implementation = Boolean.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid payment verification data")
+    })
+    public ResponseEntity<Boolean> verifyPayment(@Valid @RequestBody PaymentVerificationRequest request) {
+        boolean isVerified = paymentService.verifyPaymentAndSendNotifications(
+            request.getOrderId(),
+            request.getPaymentId(),
+            request.getSignature(),
+            request.getDonorName(),
+            request.getDonorEmail(),
+            request.getAmount(),
+            request.getCurrency(),
+request.getCauseName()
+        );
+        return ResponseEntity.ok(isVerified);
+    }
 }

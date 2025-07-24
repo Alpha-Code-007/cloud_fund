@@ -4,6 +4,7 @@ com\donorbox\backend\controller\AdminController.class
 com\donorbox\backend\dto\HomepageStatsResponse$HomepageStatsResponseBuilder.class
 com\donorbox\backend\entity\Cause$CauseBuilder.class
 com\donorbox\backend\service\DonationService.class
+com\donorbox\backend\dto\PaymentVerificationRequest$PaymentVerificationRequestBuilder.class
 com\donorbox\backend\entity\Cause$CauseStatus.class
 com\donorbox\backend\entity\Donation.class
 com\donorbox\backend\controller\PublicController.class
@@ -14,6 +15,8 @@ com\donorbox\backend\service\ImageUploadService.class
 com\donorbox\backend\entity\Cause.class
 com\donorbox\backend\repository\CauseRepository.class
 com\donorbox\backend\service\StatsService.class
+com\donorbox\backend\service\EmailService.class
+com\donorbox\backend\dto\PaymentVerificationRequest.class
 com\donorbox\backend\service\PaymentService.class
 com\donorbox\backend\entity\Volunteer.class
 com\donorbox\backend\entity\Event$EventStatus.class
