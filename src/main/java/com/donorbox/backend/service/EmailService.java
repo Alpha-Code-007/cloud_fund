@@ -19,13 +19,18 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
-    public void sendSimpleMessage(String to, String subject, String text) {
+   public void sendSimpleMessage(String to, String subject, String text) {
+    try {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("info.sairuraldevelopmenttrust@gmail.com");
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
         mailSender.send(message);
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
     public void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
@@ -33,6 +38,7 @@ public class EmailService {
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(htmlContent, true);
+        helper.setFrom("info.sairuraldevelopmenttrust@gmail.com");
 
         mailSender.send(message);
     }

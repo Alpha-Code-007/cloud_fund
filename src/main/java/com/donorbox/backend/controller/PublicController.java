@@ -34,6 +34,7 @@ public class PublicController {
     private final ContactService contactService;
     private final StatsService statsService;
     private final PaymentService paymentService;
+    private final EmailService emailService;
 
     // Donation Endpoints
     @PostMapping("/donate")
@@ -45,6 +46,37 @@ public class PublicController {
     public ResponseEntity<Donation> makeDonation(@Valid @RequestBody DonationRequest request) {
         Donation donation = donationService.createDonation(request);
         return new ResponseEntity<>(donation, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/donate-with-notifications")
+    @Operation(summary = "Make a donation with email notifications", 
+               description = "Create a donation record and send confirmation emails to donor and organization")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Donation created and notifications sent successfully", 
+                        content = {@Content(mediaType = "application/json", schema = @Schema(implementation = Donation.class))}),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    public ResponseEntity<Donation> makeDonationWithNotifications(@Valid @RequestBody DonationRequest request) {
+        try {
+            // Create the donation
+            Donation donation = donationService.createDonation(request);
+            
+            // Get cause name for email notifications
+            String causeName = donation.getCause() != null ? donation.getCause().getTitle() : "General Donation";
+            
+            // Send donor confirmation email
+            sendDonorNotificationEmail(donation, causeName);
+            
+            // Send organization notification email
+            sendOrganizationNotificationEmail(donation, causeName);
+            
+            log.info("Donation created with ID: {} and notifications sent", donation.getId());
+            
+            return new ResponseEntity<>(donation, HttpStatus.CREATED);
+        } catch (Exception e) {
+            log.error("Error creating donation with notifications", e);
+            throw new RuntimeException("Failed to process donation with notifications: " + e.getMessage());
+        }
     }
 
     @GetMapping("/donations")
@@ -185,5 +217,93 @@ public class PublicController {
         }
         
         return ResponseEntity.ok(isVerified);
+    }
+    
+    // Helper methods for email notifications
+    private void sendDonorNotificationEmail(Donation donation, String causeName) {
+        try {
+            String subject = "Thank You for Your Donation - Confirmation";
+            String htmlContent = String.format(
+                "<html>" +
+                "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>" +
+                "<h1 style='color: #2c5aa0; text-align: center;'>Thank You for Your Donation!</h1>" +
+                "<p>Dear %s,</p>" +
+                "<p>We are delighted to confirm that your donation has been successfully received.</p>" +
+                "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>" +
+                "<h3 style='margin-top: 0; color: #2c5aa0;'>Donation Details:</h3>" +
+                "<p><strong>Amount:</strong> %s %s</p>" +
+                "<p><strong>Cause:</strong> %s</p>" +
+                "<p><strong>Donation ID:</strong> %s</p>" +
+                "<p><strong>Date:</strong> %s</p>" +
+                "<p><strong>Status:</strong> %s</p>" +
+                "</div>" +
+                "<p>Your generous contribution will make a real difference in supporting our cause. " +
+                "We will keep you updated on how your donation is being used.</p>" +
+                "<p>For any questions or concerns, please feel free to contact us.</p>" +
+                "<p>With heartfelt gratitude,<br>The DonorBox Team</p>" +
+                "</div>" +
+                "</body>" +
+                "</html>",
+                donation.getDonorName(),
+                donation.getCurrency(),
+                donation.getAmount(),
+                causeName,
+                donation.getId(),
+                donation.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")),
+                donation.getStatus()
+            );
+            
+            // Use the EmailService to send HTML email
+            emailService.sendHtmlEmail(donation.getDonorEmail(), subject, htmlContent);
+        } catch (Exception e) {
+            log.error("Error sending donor notification email for donation ID: {}", donation.getId(), e);
+        }
+    }
+    
+    private void sendOrganizationNotificationEmail(Donation donation, String causeName) {
+        try {
+            String adminEmail = "info.sairuraldevelopmenttrust@gmail.com"; 
+            String subject = "New Donation Received - " + donation.getCurrency() + " " + donation.getAmount();
+            String htmlContent = String.format(
+                "<html>" +
+                "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>" +
+                "<h1 style='color: #28a745; text-align: center;'>New Donation Received!</h1>" +
+                "<p>A new donation has been successfully received through the DonorBox platform.</p>" +
+                "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>" +
+                "<h3 style='margin-top: 0; color: #28a745;'>Donation Details:</h3>" +
+                "<p><strong>Donor Name:</strong> %s</p>" +
+                "<p><strong>Donor Email:</strong> %s</p>" +
+                "<p><strong>Donor Phone:</strong> %s</p>" +
+                "<p><strong>Amount:</strong> %s %s</p>" +
+                "<p><strong>Cause:</strong> %s</p>" +
+                "<p><strong>Donation ID:</strong> %s</p>" +
+                "<p><strong>Date:</strong> %s</p>" +
+                "<p><strong>Status:</strong> %s</p>" +
+                "<p><strong>Message:</strong> %s</p>" +
+                "</div>" +
+                "<p>Please log into the admin dashboard to view more details and manage this donation.</p>" +
+                "<p>Best regards,<br>DonorBox System</p>" +
+                "</div>" +
+                "</body>" +
+                "</html>",
+                donation.getDonorName(),
+                donation.getDonorEmail(),
+                donation.getDonorPhone() != null ? donation.getDonorPhone() : "Not provided",
+                donation.getCurrency(),
+                donation.getAmount(),
+                causeName,
+                donation.getId(),
+                donation.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")),
+                donation.getStatus(),
+                donation.getMessage() != null ? donation.getMessage() : "No message provided"
+            );
+            
+            // Use the EmailService to send HTML email
+            emailService.sendHtmlEmail(adminEmail, subject, htmlContent);
+        } catch (Exception e) {
+            log.error("Error sending organization notification email for donation ID: {}", donation.getId(), e);
+        }
     }
 }

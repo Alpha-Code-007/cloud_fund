@@ -25,7 +25,7 @@ public class PaymentService {
 
     public PaymentService(@Value("${razorpay.key.id}") String keyId, 
                          @Value("${razorpay.key.secret}") String keySecret,
-                         @Value("${admin.email:admin@donorbox.com}") String adminEmail,
+                         @Value("${admin.email:info.sairuraldevelopmenttrust@gmail.com}") String adminEmail,
                          EmailService emailService) throws RazorpayException {
         this.razorpayClient = new RazorpayClient(keyId, keySecret);
         this.keySecret = keySecret;
