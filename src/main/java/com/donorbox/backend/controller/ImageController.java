@@ -37,9 +37,7 @@ public class ImageController {
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
-    /**
-     * Upload an image for causes
-     */
+     //Upload an image for causes
     @PostMapping("/causes/upload-image")
     @Operation(summary = "Upload cause image", description = "Upload an image file for a cause")
     @ApiResponses(value = {
@@ -54,9 +52,8 @@ public class ImageController {
         return uploadImage(file, "causes");
     }
 
-    /**
-     * Upload an image for events
-     */
+     // Upload an image for events
+   
     @PostMapping("/events/upload-image")
     @Operation(summary = "Upload event image", description = "Upload an image file for an event")
     @ApiResponses(value = {
@@ -70,10 +67,7 @@ public class ImageController {
         
         return uploadImage(file, "events");
     }
-
-    /**
-     * Generic image upload method
-     */
+     // Generic image upload method
     @PostMapping("/upload-image")
     @Operation(summary = "Upload image", description = "Upload an image file with specified category")
     @ApiResponses(value = {
@@ -90,9 +84,7 @@ public class ImageController {
         return uploadImage(file, category);
     }
 
-    /**
-     * Serve uploaded images
-     */
+     // Serve uploaded images
     @GetMapping("/images/{category}/{filename:.+}")
     @Operation(summary = "Get uploaded image", description = "Retrieve an uploaded image file")
     @ApiResponses(value = {
@@ -127,9 +119,7 @@ public class ImageController {
         }
     }
 
-    /**
-     * Delete an uploaded image
-     */
+     // Delete an uploaded image
     @DeleteMapping("/images/{category}/{filename:.+}")
     @Operation(summary = "Delete uploaded image", description = "Delete an uploaded image file")
     @ApiResponses(value = {
@@ -159,9 +149,7 @@ public class ImageController {
         }
     }
 
-    /**
-     * Common image upload logic
-     */
+     // Common image upload logic
     private ResponseEntity<Map<String, String>> uploadImage(MultipartFile file, String category) {
         Map<String, String> response = new HashMap<>();
         
@@ -189,11 +177,8 @@ public class ImageController {
             response.put("error", "Failed to upload image: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
-    }
-
-    /**
-     * Determine content type based on file extension
-     */
+    } 
+     // Determine content type based on file extension
     private String determineContentType(String filename) {
         String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
         

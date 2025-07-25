@@ -165,12 +165,9 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
         return ResponseEntity.noContent().build();
     }
 
-
-    // ===== RESTORED MULTIPART FORM ENDPOINTS FOR IMAGE UPLOADS =====
-
-    /**
-     * Create cause with image upload (multipart form)
-     */
+    
+    // Create cause with image upload (multipart form)
+     
     @PostMapping(value = "/causes/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Admin - Create cause with image", description = "Create a new cause with image upload")
     @ApiResponses(value = {
@@ -213,9 +210,7 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
         }
     }
 
-    /**
-     * Update cause with image upload (multipart form)
-     */
+     // Update cause with image upload (multipart form)
     @PutMapping(value = "/causes/{id}/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Admin - Update cause with image", description = "Update an existing cause with optional image upload")
     @ApiResponses(value = {
@@ -266,9 +261,8 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
         }
     }
 
-    /**
-     * Create event with image upload (multipart form)
-     */
+     // Create event with image upload (multipart form)
+    
     @PostMapping(value = "/events/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Admin - Create event with image", description = "Create a new event with image upload")
     @ApiResponses(value = {
@@ -322,9 +316,7 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
         }
     }
 
-    /**
-     * Update event with image upload (multipart form)
-     */
+     // Update event with image upload (multipart form)
     @PutMapping(value = "/events/{id}/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Admin - Update event with image", description = "Update an existing event with optional image upload")
     @ApiResponses(value = {
