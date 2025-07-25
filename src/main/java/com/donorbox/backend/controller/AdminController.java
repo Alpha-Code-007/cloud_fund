@@ -282,6 +282,7 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
             @Parameter(description = "Event date (ISO format)") @RequestParam("eventDate") String eventDate,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
             @Parameter(description = "Max participants") @RequestParam(value = "maxParticipants", required = false) String maxParticipants,
+            @Parameter(description = "Current participants") @RequestParam(value = "currentParticipants", required = false) String currentParticipants,
             @Parameter(description = "Image file") @RequestParam(value = "image", required = false) MultipartFile image) {
         
         try {
@@ -296,6 +297,13 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
             
             if (maxParticipants != null) {
                 event.setMaxParticipants(Integer.parseInt(maxParticipants));
+            }
+            
+            // Set current participants (default to 0 if not provided)
+            if (currentParticipants != null && !currentParticipants.trim().isEmpty()) {
+                event.setCurrentParticipants(Integer.parseInt(currentParticipants));
+            } else {
+                event.setCurrentParticipants(0);
             }
             
             // Handle image upload if provided
