@@ -30,6 +30,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/images/**").permitAll()  // Allow public access to images
+                .requestMatchers("/uploads/**").permitAll()     // Allow direct access to uploads folder
                 .requestMatchers("/donate").permitAll()
                 .requestMatchers("/donations").permitAll()
                 .requestMatchers("/causes").permitAll()

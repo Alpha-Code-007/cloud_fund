@@ -16,7 +16,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Serve uploaded images as static content
-        registry.addResourceHandler("/api/images/**")
+        registry.addResourceHandler("/api/images/**")//causes,event image access,blog
                 .addResourceLocations("file:" + Paths.get(uploadDir).toAbsolutePath().toString() + "/")
                 .setCachePeriod(3600); // Cache for 1 hour
     }

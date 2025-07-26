@@ -3,6 +3,7 @@ package com.donorbox.backend.controller;
 import com.donorbox.backend.dto.*;
 import com.donorbox.backend.entity.*;
 import com.donorbox.backend.service.*;
+import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,7 +23,7 @@ import java.math.BigDecimal;
 import java.util.List;
  
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api/public")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Public API", description = "Public endpoints for frontend")
@@ -36,6 +37,7 @@ public class PublicController {
     private final StatsService statsService;
     private final PaymentService paymentService;
     private final EmailService emailService;
+    private final BlogService blogService;
  
     // Donation Endpoints
     @PostMapping("/donate")
@@ -62,14 +64,8 @@ public class PublicController {
             // Create the donation
             Donation donation = donationService.createDonation(request);
            
-            // Get cause name for email notifications
-            String causeName = donation.getCause() != null ? donation.getCause().getTitle() : "General Donation";
-           
-            // Send donor confirmation email
-            sendDonorNotificationEmail(donation, causeName);
-           
-            // Send organization notification email
-            sendOrganizationNotificationEmail(donation, causeName);
+            // Send email notifications using centralized EmailService
+            emailService.sendDonationEmails(donation, "info.sairuraldevelopmenttrust@gmail.com");
            
             log.info("Donation created with ID: {} and notifications sent", donation.getId());
            
@@ -295,158 +291,53 @@ public class PublicController {
         return ResponseEntity.ok(isVerified);
     }
    
-    // Helper methods for email notifications
-    private void sendDonorNotificationEmail(Donation donation, String causeName) {
-    try {
-        String status = donation.getStatus() != null ? donation.getStatus().toString() : "UNKNOWN";
-        String statusColor = switch (donation.getStatus()) {
-            case COMPLETED -> "#28a745";   // Green
-            case FAILED -> "#dc3545";      // Red
-            case PENDING -> "#ffc107";     // Orange
-            case REFUNDED -> "#17a2b8";    // Blue
-            default -> "#6c757d";          // Gray
-        };
-        String statusMessage = switch (donation.getStatus()) {
-            case COMPLETED -> "We are delighted to confirm that your donation has been successfully received.";
-            case PENDING -> "Your donation is currently pending. We will notify you once the payment is confirmed.";
-            case FAILED -> "Unfortunately, your donation could not be processed. Please try again or contact support.";
-            case REFUNDED -> "Your donation has been refunded. For further details, please contact support.";
-            default -> "Your donation status is currently unknown. Please contact support for more information.";
-        };
- 
-        String subject = switch (donation.getStatus()) {
-            case COMPLETED -> "Your Donation is Complete - Thank You!";
-            case PENDING -> "Your Donation is Pending - Action Required?";
-            case FAILED -> "Action Required: Your Donation Failed";
-            case REFUNDED -> "Your Donation Has Been Refunded";
-            default -> "Update on Your Donation";
-        };
- 
-        // --- Dynamic Main Heading based on Status ---
-        String mainHeading = switch (donation.getStatus()) {
-            case COMPLETED -> "Donation Confirmed - Thank You!";
-            case PENDING -> "Your Donation is Pending";
-            case FAILED -> "Donation Unsuccessful";
-            case REFUNDED -> "Donation Refunded";
-            default -> "Update on Your Donation";
-        };
-        // --- END
- 
-        String htmlContent = String.format(
-            "<html>" +
-            "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
-            "<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>" +
-            "<h1 style='color: #2c5aa0; text-align: center;'>%s</h1>" + //  dynamic heading
-            "<p>Dear %s,</p>" +
-            "<p>%s</p>" +
-            "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>" +
-            "<h3 style='margin-top: 0; color: #2c5aa0;'>Donation Details:</h3>" +
-            "<p><strong>Amount:</strong> %s %s</p>" +
-            "<p><strong>Cause:</strong> %s</p>" +
-            "<p><strong>Donation ID:</strong> %s</p>" +
-            "<p><strong>Date:</strong> %s</p>" +
-            "<p><strong>Phone:</strong> %s</p>" +
-            "<p><strong>Status:</strong> <span style='color: %s;'>%s</span></p>" +
-            "</div>" +
-            "<p>Your generous contribution will make a real difference in supporting our cause. " +
-            "We will keep you updated on how your donation is being used.</p>" +
-            "<p>With heartfelt gratitude,<br>The DonorBox Team</p>" +
-            "</div>" +
-            "</body>" +
-            "</html>",
-            mainHeading, // ---  dynamic 'mainHeading' variable here ---
-            donation.getDonorName(),
-            statusMessage,
-            donation.getCurrency(),
-            donation.getAmount(),
-            causeName,
-            donation.getId(),
-            donation.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")),
-            donation.getDonorPhone() != null ? donation.getDonorPhone() : "Not provided",
-            statusColor,
-            status
-        );
- 
-        emailService.sendHtmlEmail(donation.getDonorEmail(), subject, htmlContent);
- 
-    } catch (Exception e) {
-        log.error("Error sending donor notification email for donation ID: {}", donation.getId(), e);
+    // ====================================
+    // Public Blog Endpoints
+    // ====================================
+
+    @GetMapping("/blogs")
+    @Operation(summary = "Get published blogs", description = "Retrieve all published blog posts")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved published blogs")
+    public ResponseEntity<List<BlogResponse>> getPublishedBlogs() {
+        List<Blog> blogs = blogService.getPublishedBlogs();
+        List<BlogResponse> responses = blogs.stream()
+                .map(BlogResponse::summaryFromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/blogs/{slug}")
+    @Operation(summary = "Get blog by slug", description = "Retrieve a specific blog post by slug")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved blog"),
+            @ApiResponse(responseCode = "404", description = "Blog not found")
+    })
+    public ResponseEntity<BlogResponse> getBlogBySlug(
+            @Parameter(description = "Blog slug") @PathVariable String slug) {
+        try {
+            Blog blog = blogService.getBlogBySlug(slug, true); // increment view count
+            
+            // Only return published blogs for public access
+            if (!blog.isPublished()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            BlogResponse response = BlogResponse.fromEntity(blog);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            log.error("Blog not found with slug: {}", slug);
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/blogs/featured")
+    @Operation(summary = "Get featured blogs", description = "Retrieve featured blog posts")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved featured blogs")
+    public ResponseEntity<List<BlogResponse>> getFeaturedBlogs() {
+        List<Blog> blogs = blogService.getFeaturedBlogs();
+        List<BlogResponse> responses = blogs.stream()
+                .map(BlogResponse::summaryFromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 }
-   
-    private void sendOrganizationNotificationEmail(Donation donation, String causeName) {
-    try {
-        String status = donation.getStatus() != null ? donation.getStatus().toString() : "UNKNOWN";
-        String statusColor = switch (donation.getStatus()) {
-            case COMPLETED -> "#28a745";   // Green
-            case FAILED -> "#dc3545";      // Red
-            case PENDING -> "#ffc107";     // Orange
-            case REFUNDED -> "#17a2b8";    // Blue
-            default -> "#6c757d";          // Gray
-        };
- 
-        // --- NEW: Dynamic Subject Line for Organization ---
-        String subject = switch (donation.getStatus()) {
-            case COMPLETED -> "New Donation: " + donation.getCurrency() + " " + donation.getAmount() + " Received!";
-            case PENDING -> "Pending Donation: " + donation.getCurrency() + " " + donation.getAmount() + " from " + donation.getDonorName();
-            case FAILED -> "Failed Donation: " + donation.getCurrency() + " " + donation.getAmount() + " from " + donation.getDonorName();
-            case REFUNDED -> "Donation Refunded: " + donation.getCurrency() + " " + donation.getAmount() + " (ID: " + donation.getId() + ")";
-            default -> "Donation Status Update (ID: " + donation.getId() + ")";
-        };
-        // --- END NEW ---
- 
-        // --- NEW: Dynamic Main Heading for Organization ---
-        String mainHeading = switch (donation.getStatus()) {
-            case COMPLETED -> "New Donation Received!";
-            case PENDING -> "New Pending Donation";
-            case FAILED -> "Donation Attempt Failed";
-            case REFUNDED -> "Donation Refunded";
-            default -> "Donation Status Update";
-        };
-        // --- END NEW ---
- 
-        String htmlContent = String.format(
-            "<html>" +
-            "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
-            "<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>" +
-            "<h1 style='color: #2c5aa0; text-align: center;'>%s</h1>" + // Changed from #28a745 to #2c5aa0 for consistency with donor email heading color, or keep green if preferred for "new"
-            "<p>A new donation has been processed through the DonorBox platform with the following status:</p>" + // Adjusted introductory text
-            "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>" +
-            "<h3 style='margin-top: 0; color: #2c5aa0;'>Donation Details:</h3>" + // Also changed to #2c5aa0
-            "<p><strong>Donor Name:</strong> %s</p>" +
-            "<p><strong>Donor Email:</strong> %s</p>" +
-            "<p><strong>Donor Phone:</strong> %s</p>" +
-            "<p><strong>Amount:</strong> %s %s</p>" +
-            "<p><strong>Cause:</strong> %s</p>" +
-            "<p><strong>Donation ID:</strong> %s</p>" +
-            "<p><strong>Date:</strong> %s</p>" +
-            "<p><strong>Status:</strong> <span style='color: %s;'>%s</span></p>" +
-            "<p><strong>Message:</strong> %s</p>" +
-            "</div>" +
-            "<p>Please log into the admin dashboard to view more details and manage this donation.</p>" +
-            "<p>Best regards,<br>DonorBox System</p>" +
-            "</div>" +
-            "</body>" +
-            "</html>",
-            mainHeading, // ---  Pass dynamic mainHeading ---
-            donation.getDonorName() ,
-            donation.getDonorEmail() ,
-            donation.getDonorPhone() ,
-            donation.getCurrency(),
-            donation.getAmount(),
-            causeName,
-            donation.getId(),
-            donation.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")),
-            statusColor,
-            status,
-            donation.getMessage() != null ? donation.getMessage() : "No message provided"
-        );
- 
-        String adminEmail = "info.sairuraldevelopmenttrust@gmail.com";
-        // ---Pass the dynamic 'subject' variable here ---
-        emailService.sendHtmlEmail(adminEmail, subject, htmlContent);
-        // --- END  ---
- 
-    } catch (Exception e) {
-        log.error("Error sending organization notification email for donation ID: {}", donation.getId(), e);
-    }}}

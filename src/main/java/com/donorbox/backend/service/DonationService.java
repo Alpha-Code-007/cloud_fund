@@ -69,32 +69,10 @@ public class DonationService {
 
         Donation updatedDonation = donationRepository.save(donation);
 
-        // Send email to donor
-        sendDonationStatusEmail(updatedDonation);
+        // ✅ Use centralized EmailService
+        emailService.sendDonationEmails(updatedDonation, "info.sairuraldevelopmenttrust@gmail.com");
 
         return updatedDonation;
-    }
-
-    private void sendDonationStatusEmail(Donation donation) {
-        String subject = "Donation " + donation.getStatus().name().toLowerCase();
-        String html = "<h2>Dear " + donation.getDonorName() + ",</h2>" +
-                "<p>Your donation of <strong>" + donation.getAmount() + " " + donation.getCurrency() + "</strong> has been <strong>" + donation.getStatus().name().toLowerCase() + "</strong>.</p>";
-
-        if (donation.getStatus() == Donation.DonationStatus.COMPLETED) {
-            html += "<p>Thank you for your generous support!</p>";
-        } else if (donation.getStatus() == Donation.DonationStatus.PENDING) {
-            html += "<p>We are currently processing your donation. You will receive another email once it is completed.</p>";
-        } else if (donation.getStatus() == Donation.DonationStatus.FAILED) {
-            html += "<p>Unfortunately, your donation could not be processed. Please try again or contact support.</p>";
-        }
-
-        html += "<p>Regards,<br>SAI Rural Development Trust</p>";
-
-        try {
-            emailService.sendHtmlEmail(donation.getDonorEmail(), subject, html);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     @Transactional(readOnly = true)
