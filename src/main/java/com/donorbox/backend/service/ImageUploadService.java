@@ -91,7 +91,7 @@ public class ImageUploadService {
         if (relativePath == null || relativePath.trim().isEmpty()) {
             return null;
         }
-        return "http://localhost:" + serverPort + "/api/images/" + relativePath;
+        return "https://cloud-fund-i1kt.onrender.com" + serverPort + "/api/images/" + relativePath;
     }
 
     /**
