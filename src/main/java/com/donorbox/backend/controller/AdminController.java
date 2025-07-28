@@ -464,7 +464,7 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
             @Parameter(description = "Blog ID") @PathVariable Long id,
             @Valid @RequestBody BlogRequest request) {
         try {
-            // Auto-calculate reading time if not provided
+            
             if (request.getReadingTime() == null) {
                 request.setReadingTime(blogService.calculateReadingTime(request.getContent()));
             }
