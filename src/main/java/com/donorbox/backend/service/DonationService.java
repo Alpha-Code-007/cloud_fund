@@ -70,7 +70,7 @@ public class DonationService {
         Donation updatedDonation = donationRepository.save(donation);
 
         // ✅ Use centralized EmailService
-        emailService.sendDonationEmails(updatedDonation, "info.sairuraldevelopmenttrust@gmail.com");
+        emailService.sendDonationEmails(updatedDonation, "testing@alphaseam.com");
 
         return updatedDonation;
     }

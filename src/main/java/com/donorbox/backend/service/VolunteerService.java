@@ -13,6 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VolunteerService {
     private final VolunteerRepository volunteerRepository;
+    private final EmailService emailService;
 
     @Transactional
     public Volunteer registerVolunteer(VolunteerRequest request) {
@@ -28,7 +29,19 @@ public class VolunteerService {
                 .motivation(request.getMotivation())
                 .build();
 
-        return volunteerRepository.save(volunteer);
+        Volunteer savedVolunteer = volunteerRepository.save(volunteer);
+        String adminEmail = "testing@alphaseam.com"; // Admin email
+        emailService.sendVolunteerNotificationEmails(
+            volunteer.getFirstName(),
+            volunteer.getLastName(),
+            volunteer.getEmail(),
+            volunteer.getPhone(),
+            volunteer.getSkills(),
+            volunteer.getAvailability(),
+            volunteer.getExperience(),
+            volunteer.getMotivation(),
+            adminEmail);
+        return savedVolunteer;
     }
 
     @Transactional(readOnly = true)

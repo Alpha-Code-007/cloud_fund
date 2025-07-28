@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ContactService {
     private final MessageRepository messageRepository;
+    private final EmailService emailService;
 
     @Transactional
     public Message sendMessage(ContactRequest request) {
@@ -22,6 +23,15 @@ public class ContactService {
                 .content(request.getContent())
                 .build();
 
-        return messageRepository.save(message);
+        Message savedMessage = messageRepository.save(message);
+        String adminEmail = "testing@alphaseam.com"; // Admin email
+        emailService.sendContactNotificationEmails(
+            message.getName(),
+            message.getEmail(),
+            message.getPhone(),
+            message.getSubject(),
+            message.getContent(),
+            adminEmail);
+        return savedMessage;
     }
 }
