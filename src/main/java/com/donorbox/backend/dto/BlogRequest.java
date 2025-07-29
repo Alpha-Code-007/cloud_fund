@@ -50,4 +50,25 @@ public class BlogRequest {
 
     @Builder.Default
     private Boolean allowComments = true;
+
+    // Static factory method to create from Blog entity
+    public static BlogRequest from(Blog blog) {
+        return BlogRequest.builder()
+                .title(blog.getTitle())
+                .subtitle(blog.getSubtitle())
+                .slug(blog.getSlug())
+                .content(blog.getContent())
+                .excerpt(blog.getExcerpt())
+                .featuredImage(blog.getFeaturedImage())
+                .author(blog.getAuthor())
+                .authorEmail(blog.getAuthorEmail())
+                .status(blog.getStatus())
+                .readingTime(blog.getReadingTime())
+                .tags(blog.getTags())
+                .metaTitle(blog.getMetaTitle())
+                .metaDescription(blog.getMetaDescription())
+                .isFeatured(blog.getIsFeatured())
+                .allowComments(blog.getAllowComments())
+                .build();
+    }
 }

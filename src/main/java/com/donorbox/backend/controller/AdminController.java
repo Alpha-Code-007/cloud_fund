@@ -579,6 +579,33 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
         }
     }
 
+    @PutMapping(value = "/blogs/{id}/update-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Admin - Update blog image", description = "Update the featured image of a blog post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Blog image updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Blog not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    public ResponseEntity<BlogResponse> updateBlogImage(
+            @Parameter(description = "Blog ID") @PathVariable Long id,
+            @Parameter(description = "Featured image file") @RequestParam("image") MultipartFile image) {
+        try {
+            Blog blog = blogService.getBlogById(id);
+            // Handle image upload if provided
+            if (image != null && !image.isEmpty()) {
+                String featuredImage = imageUploadService.uploadImage(image, "blogs");
+                blog.setFeaturedImage(featuredImage);
+            }
+            blogService.updateBlog(blog.getId(), BlogRequest.from(blog));
+            BlogResponse response = BlogResponse.fromEntity(blog);
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @DeleteMapping("/blogs/{id}")
     @Operation(summary = "Admin - Delete blog", description = "Delete a blog post")
     @ApiResponses(value = {
