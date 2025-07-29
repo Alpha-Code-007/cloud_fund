@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/images/**").permitAll()  // Allow public access to images
                 .requestMatchers("/api/documents/**").permitAll() // Allow public access to documents
                 .requestMatchers("/api/personal-cause-submissions/**").permitAll() // Allow public access to personal cause submissions
+                .requestMatchers("/api/media/**").permitAll()    // Allow public access to media
                 .requestMatchers("/uploads/**").permitAll()     // Allow direct access to uploads folder
                 .requestMatchers("/donate").permitAll()
                 .requestMatchers("/donations").permitAll()
