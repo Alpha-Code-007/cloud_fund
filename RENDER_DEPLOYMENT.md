@@ -63,12 +63,19 @@ JWT_SECRET=your-super-long-and-secure-jwt-secret-key-here
 JWT_EXPIRATION=86400
 ```
 
-### Email Configuration (optional):
+### Email Configuration - Alphaseam Mail Server:
 ```
-MAIL_HOST=smtp.gmail.com
+MAIL_HOST=mail.alphaseam.com
 MAIL_PORT=587
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
+MAIL_USERNAME=testing@alphaseam.com
+MAIL_PASSWORD=Alphaseam@!#8520
+ADMIN_EMAIL=testing@alphaseam.com
+
+# Optional IMAP/POP3 settings (for reference)
+IMAP_HOST=mail.alphaseam.com
+IMAP_PORT=993
+POP3_HOST=mail.alphaseam.com
+POP3_PORT=995
 ```
 
 ### Payment Configuration:

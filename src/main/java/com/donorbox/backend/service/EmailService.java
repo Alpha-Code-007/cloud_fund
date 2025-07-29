@@ -24,7 +24,7 @@ public class EmailService {
     public void sendSimpleMessage(String to, String subject, String text) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("info.sairuraldevelopmenttrust@gmail.com");
+            message.setFrom("testing@alphaseam.com");
             message.setTo(to);
             message.setSubject(subject);
             message.setText(text);
@@ -38,7 +38,7 @@ public class EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
-        helper.setFrom("info.sairuraldevelopmenttrust@gmail.com");
+        helper.setFrom("testing@alphaseam.com");
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(htmlContent, true);

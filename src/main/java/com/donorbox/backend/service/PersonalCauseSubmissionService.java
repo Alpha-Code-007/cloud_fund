@@ -97,7 +97,7 @@ public class PersonalCauseSubmissionService {
                 + (proofDocumentUrl != null ? "<p><strong>Proof Document:</strong> " + proofDocumentName + " (" + proofDocumentType + ")</p>" : "<p><strong>Proof Document:</strong> Not provided</p>")
                 + "</div>"
                 + "<p>Please review this submission in the admin dashboard.</p>";
-        emailService.sendSubmissionStatusEmail("info.sairuraldevelopmenttrust@gmail.com", adminSubject, adminHtmlContent);
+        emailService.sendSubmissionStatusEmail("testing@alphaseam.com", adminSubject, adminHtmlContent);
 
         return PersonalCauseSubmissionResponse.fromEntity(savedSubmission);
     }

@@ -15,17 +15,27 @@ The following configurations are properly set up:
 razorpay.key.id=rzp_test_a3kb1GXuvUpqcu
 razorpay.key.secret=Xor0KhdlApRxLBS9EZLSgj1p
 
-# EMAIL CONFIGURATION
-spring.mail.host=smtp.gmail.com
+# EMAIL CONFIGURATION - Alphaseam Mail Server
+spring.mail.host=mail.alphaseam.com
 spring.mail.port=587
-spring.mail.username=info.sairuraldevelopmenttrust@gmail.com
-spring.mail.password=vyrjuzftuavkshyv
+spring.mail.username=testing@alphaseam.com
+spring.mail.password=Alphaseam@!#8520
 spring.mail.protocol=smtp
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 
+# IMAP Configuration
+# imap.host=mail.alphaseam.com
+# imap.port=993
+# imap.auth=true
+
+# POP3 Configuration
+# pop3.host=mail.alphaseam.com
+# pop3.port=995
+# pop3.auth=true
+
 # ADMIN EMAIL
-admin.email=info.sairuraldevelopmenttrust@gmail.com
+admin.email=testing@alphaseam.com
 ```
 
 ### 2. Payment Endpoints
@@ -103,7 +113,7 @@ POST /payment/verify
 
 #### Admin Notification Email
 - **Trigger**: After successful payment verification
-- **Recipient**: Admin email (info.sairuraldevelopmenttrust@gmail.com)
+- **Recipient**: Admin email (testing@alphaseam.com)
 - **Content**:
   - New donation alert
   - Complete donor and donation details
