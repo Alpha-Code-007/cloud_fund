@@ -26,6 +26,9 @@ public class ImageUploadService {
     @Value("${server.port:8080}")
     private String serverPort;
 
+    @Value("${app.base.url:http://localhost}")
+    private String baseUrl;
+
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "webp");
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -91,7 +94,9 @@ public class ImageUploadService {
         if (relativePath == null || relativePath.trim().isEmpty()) {
             return null;
         }
-        return "https://cloud-fund-i1kt.onrender.com" + serverPort + "/api/images/" + relativePath;
+        // Construct URL based on environment
+        String port = serverPort.equals("8080") ? "" : ":" + serverPort;
+        return baseUrl + port + "/api/images/" + relativePath;
     }
 
     /**

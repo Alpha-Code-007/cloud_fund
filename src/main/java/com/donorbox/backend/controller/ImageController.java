@@ -67,6 +67,37 @@ public class ImageController {
         
         return uploadImage(file, "events");
     }
+
+     // Upload an image for blogs
+    @PostMapping("/blogs/upload-image")
+    @Operation(summary = "Upload blog image", description = "Upload an image file for a blog post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, String>> uploadBlogImage(
+            @Parameter(description = "Image file to upload")
+            @RequestParam("image") MultipartFile file) {
+        
+        return uploadImage(file, "blogs");
+    }
+
+     // Upload an image for personal causes
+    @PostMapping("/personal-causes/upload-image")
+    @Operation(summary = "Upload personal cause image", description = "Upload an image file for a personal cause submission")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, String>> uploadPersonalCauseImage(
+            @Parameter(description = "Image file to upload")
+            @RequestParam("image") MultipartFile file) {
+        
+        return uploadImage(file, "personal-causes");
+    }
+
      // Generic image upload method
     @PostMapping("/upload-image")
     @Operation(summary = "Upload image", description = "Upload an image file with specified category")
