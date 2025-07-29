@@ -4,6 +4,8 @@ import com.donorbox.backend.entity.*;
 import com.donorbox.backend.service.*;
 import com.donorbox.backend.dto.BlogRequest;
 import com.donorbox.backend.dto.BlogResponse;
+import com.donorbox.backend.dto.PersonalCauseSubmissionResponse;
+import com.donorbox.backend.dto.SubmissionActionRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,6 +44,7 @@ public class AdminController {
     private final VolunteerService volunteerService;
     private final ImageUploadService imageUploadService;
     private final BlogService blogService;
+    private final PersonalCauseSubmissionService personalCauseSubmissionService;
 
     // Admin Causes Management
     @GetMapping("/causes")
@@ -630,6 +633,83 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // ====================================
+    // Admin Personal Cause Submissions Management
+    // ====================================
+
+    @GetMapping("/personal-cause-submissions")
+    @Operation(summary = "Admin - Get all personal cause submissions", description = "Retrieve all personal cause submissions for admin review")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved submissions",
+                 content = @Content(mediaType = "application/json", 
+                                  array = @ArraySchema(schema = @Schema(implementation = PersonalCauseSubmissionResponse.class))))
+    public ResponseEntity<List<PersonalCauseSubmissionResponse>> getAllPersonalCauseSubmissions() {
+        List<PersonalCauseSubmissionResponse> submissions = personalCauseSubmissionService.getAllSubmissions();
+        return ResponseEntity.ok(submissions);
+    }
+
+    @GetMapping("/personal-cause-submissions/{id}")
+    @Operation(summary = "Admin - Get personal cause submission by ID", description = "Retrieve specific personal cause submission")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved submission",
+                        content = @Content(mediaType = "application/json", 
+                                         schema = @Schema(implementation = PersonalCauseSubmissionResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Submission not found")
+    })
+    public ResponseEntity<PersonalCauseSubmissionResponse> getPersonalCauseSubmissionById(
+            @Parameter(description = "ID of the submission to retrieve")
+            @PathVariable Long id) {
+        return personalCauseSubmissionService.getSubmissionById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/personal-cause-submissions/by-status/{status}")
+    @Operation(summary = "Admin - Get submissions by status", description = "Retrieve personal cause submissions filtered by status")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved submissions by status")
+    public ResponseEntity<List<PersonalCauseSubmissionResponse>> getSubmissionsByStatus(
+            @Parameter(description = "Submission status") @PathVariable PersonalCauseSubmission.SubmissionStatus status) {
+        List<PersonalCauseSubmissionResponse> submissions = personalCauseSubmissionService.getSubmissionsByStatus(status);
+        return ResponseEntity.ok(submissions);
+    }
+
+    @PostMapping("/personal-cause-submissions/{id}/approve")
+    @Operation(summary = "Admin - Approve personal cause submission", description = "Approve a personal cause submission and create corresponding cause")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Submission approved successfully"),
+            @ApiResponse(responseCode = "404", description = "Submission not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid action request")
+    })
+    public ResponseEntity<PersonalCauseSubmissionResponse> approveSubmission(
+            @Parameter(description = "ID of the submission to approve")
+            @PathVariable Long id,
+            @Valid @RequestBody SubmissionActionRequest actionRequest) {
+        try {
+            PersonalCauseSubmissionResponse response = personalCauseSubmissionService.approveSubmission(id, actionRequest);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/personal-cause-submissions/{id}/reject")
+    @Operation(summary = "Admin - Reject personal cause submission", description = "Reject a personal cause submission")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Submission rejected successfully"),
+            @ApiResponse(responseCode = "404", description = "Submission not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid action request")
+    })
+    public ResponseEntity<PersonalCauseSubmissionResponse> rejectSubmission(
+            @Parameter(description = "ID of the submission to reject")
+            @PathVariable Long id,
+            @Valid @RequestBody SubmissionActionRequest actionRequest) {
+        try {
+            PersonalCauseSubmissionResponse response = personalCauseSubmissionService.rejectSubmission(id, actionRequest);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 }
