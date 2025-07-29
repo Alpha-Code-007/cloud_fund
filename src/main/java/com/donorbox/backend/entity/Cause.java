@@ -52,6 +52,14 @@ public class Cause {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "video_url")
+    private String videoUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "media_type")
+    @Builder.Default
+    private MediaType mediaType = MediaType.IMAGE;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
@@ -89,5 +97,9 @@ public class Cause {
 
     public enum CauseStatus {
         ACTIVE, INACTIVE, COMPLETED, SUSPENDED
+    }
+
+    public enum MediaType {
+        IMAGE, VIDEO, BOTH, NONE
     }
 }

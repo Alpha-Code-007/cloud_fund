@@ -91,7 +91,7 @@ public class PublicController {
     @Operation(summary = "Get all causes", description = "Retrieve all active causes")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved causes")
     public ResponseEntity<List<Cause>> getAllCauses() {
-        List<Cause> causes = causeService.getAllCauses();
+        List<Cause> causes = causeService.getAllCausesEntities();
         return ResponseEntity.ok(causes);
     }
  
@@ -106,7 +106,7 @@ public class PublicController {
     public ResponseEntity<Cause> getCauseById(
             @Parameter(description = "ID of the cause to retrieve")
             @PathVariable Long id) {
-        Cause cause = causeService.getCauseById(id);
+        Cause cause = causeService.getCauseEntityById(id);
         return ResponseEntity.ok(cause);
     }
  

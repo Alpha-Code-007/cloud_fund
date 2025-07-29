@@ -6,6 +6,8 @@ import com.donorbox.backend.dto.BlogRequest;
 import com.donorbox.backend.dto.BlogResponse;
 import com.donorbox.backend.dto.PersonalCauseSubmissionResponse;
 import com.donorbox.backend.dto.SubmissionActionRequest;
+import com.donorbox.backend.dto.CauseRequest;
+import com.donorbox.backend.dto.CauseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -45,6 +47,7 @@ public class AdminController {
     private final ImageUploadService imageUploadService;
     private final BlogService blogService;
     private final PersonalCauseSubmissionService personalCauseSubmissionService;
+    private final MediaUploadService mediaUploadService;
 
     // Admin Causes Management
     @GetMapping("/causes")
@@ -53,7 +56,7 @@ public class AdminController {
                  content = @Content(mediaType = "application/json", 
                                   array = @ArraySchema(schema = @Schema(implementation = Cause.class))))
     public ResponseEntity<List<Cause>> getAllCauses() {
-        List<Cause> causes = causeService.getAllCauses();
+        List<Cause> causes = causeService.getAllCausesEntities();
         return ResponseEntity.ok(causes);
     }
 
@@ -68,7 +71,7 @@ public class AdminController {
     public ResponseEntity<Cause> getCauseById(
             @Parameter(description = "ID of the cause to retrieve")
             @PathVariable Long id) {
-        Cause cause = causeService.getCauseById(id);
+        Cause cause = causeService.getCauseEntityById(id);
         return ResponseEntity.ok(cause);
     }
 
@@ -78,11 +81,11 @@ public class AdminController {
         @ApiResponse(responseCode = "201", description = "Cause created successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
 })
-public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
-    if (cause.getTitle() == null || cause.getDescription() == null || cause.getTargetAmount() == null) {
+public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseRequest request) {
+    if (request.getTitle() == null || request.getDescription() == null || request.getTargetAmount() == null) {
         return ResponseEntity.badRequest().build();
     }
-    Cause createdCause = causeService.createCause(cause);
+    CauseResponse createdCause = causeService.createCause(request);
     return new ResponseEntity<>(createdCause, HttpStatus.CREATED);
 }
 
@@ -95,11 +98,11 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
             @ApiResponse(responseCode = "404", description = "Cause not found"),
             @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public ResponseEntity<Cause> updateCause(
+    public ResponseEntity<CauseResponse> updateCause(
             @Parameter(description = "ID of the cause to update")
             @PathVariable Long id,
-            @Valid @RequestBody Cause cause) {
-        Cause updatedCause = causeService.updateCause(id, cause);
+            @Valid @RequestBody CauseRequest request) {
+        CauseResponse updatedCause = causeService.updateCause(id, request);
         return ResponseEntity.ok(updatedCause);
     }
 
@@ -114,6 +117,102 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
             @PathVariable Long id) {
         causeService.deleteCause(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // Create cause with video upload (multipart form)
+    @PostMapping(value = "/causes/with-video", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Admin - Create cause with video", description = "Create a new cause with video upload")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Cause created successfully with video"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data or video upload failed")
+    })
+    public ResponseEntity<Cause> createCauseWithVideo(
+            @Parameter(description = "Cause title") @RequestParam("title") String title,
+            @Parameter(description = "Cause description") @RequestParam("description") String description,
+            @Parameter(description = "Short description") @RequestParam(value = "shortDescription", required = false) String shortDescription,
+            @Parameter(description = "Target amount") @RequestParam("targetAmount") String targetAmount,
+            @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
+            @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
+            @Parameter(description = "Video file") @RequestParam(value = "video", required = false) MultipartFile video) {
+
+        try {
+            // Create cause object
+            Cause cause = Cause.builder()
+                    .title(title)
+                    .description(description)
+                    .shortDescription(shortDescription)
+                    .targetAmount(new java.math.BigDecimal(targetAmount))
+                    .category(category)
+                    .location(location)
+                    .build();
+
+            // Handle video upload if provided
+            if (video != null && !video.isEmpty()) {
+                String videoPath = mediaUploadService.uploadVideo(video, "causes");
+                cause.setVideoUrl(videoPath); // Store relative path, not full URL
+                cause.setMediaType(Cause.MediaType.VIDEO);
+            }
+
+            Cause createdCause = causeService.createCause(cause);
+            return new ResponseEntity<>(createdCause, HttpStatus.CREATED);
+
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+     // Update cause with video upload (multipart form)
+    @PutMapping(value = "/causes/{id}/with-video", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Admin - Update cause with video", description = "Update an existing cause with optional video upload")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cause updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Cause not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    public ResponseEntity<Cause> updateCauseWithVideo(
+            @Parameter(description = "ID of the cause to update") @PathVariable Long id,
+            @Parameter(description = "Cause title") @RequestParam(value = "title", required = false) String title,
+            @Parameter(description = "Cause description") @RequestParam(value = "description", required = false) String description,
+            @Parameter(description = "Short description") @RequestParam(value = "shortDescription", required = false) String shortDescription,
+            @Parameter(description = "Target amount") @RequestParam(value = "targetAmount", required = false) String targetAmount,
+            @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
+            @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
+            @Parameter(description = "Video file") @RequestParam(value = "video", required = false) MultipartFile video) {
+
+        try {
+            // Get existing cause
+            Cause existingCause = causeService.getCauseEntityById(id);
+
+            // Update fields if provided
+            if (title != null) existingCause.setTitle(title);
+            if (description != null) existingCause.setDescription(description);
+            if (shortDescription != null) existingCause.setShortDescription(shortDescription);
+            if (targetAmount != null) existingCause.setTargetAmount(new java.math.BigDecimal(targetAmount));
+            if (category != null) existingCause.setCategory(category);
+            if (location != null) existingCause.setLocation(location);
+
+            // Handle video upload if provided
+            if (video != null && !video.isEmpty()) {
+                // Delete old video if exists
+                if (existingCause.getVideoUrl() != null) {
+                    mediaUploadService.deleteMedia(existingCause.getVideoUrl());
+                }
+
+                String videoPath = mediaUploadService.uploadVideo(video, "causes");
+                existingCause.setVideoUrl(videoPath);
+                existingCause.setMediaType(Cause.MediaType.VIDEO);
+            }
+
+            Cause updatedCause = causeService.updateCause(id, existingCause);
+            return ResponseEntity.ok(updatedCause);
+
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     // Admin Events Management
@@ -242,7 +341,7 @@ public ResponseEntity<Cause> createCause(@Valid @RequestBody Cause cause) {
         
         try {
             // Get existing cause
-            Cause existingCause = causeService.getCauseById(id);
+            Cause existingCause = causeService.getCauseEntityById(id);
             
             // Update fields if provided
             if (title != null) existingCause.setTitle(title);
