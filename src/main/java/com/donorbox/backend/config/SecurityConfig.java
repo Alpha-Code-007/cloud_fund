@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .requestMatchers("/causes").permitAll()
                 .requestMatchers("/causes/**").permitAll()
                 .requestMatchers("/events").permitAll()
+                .requestMatchers("/blogs").permitAll()
                 .requestMatchers("/events/**").permitAll()
                 .requestMatchers("/volunteer/register").permitAll()
                 .requestMatchers("/contact/send").permitAll()
