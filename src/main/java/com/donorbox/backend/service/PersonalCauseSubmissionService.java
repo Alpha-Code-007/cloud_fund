@@ -154,4 +154,12 @@ public class PersonalCauseSubmissionService {
 
         return PersonalCauseSubmissionResponse.fromEntity(submission);
     }
+
+    @Transactional
+    public void deleteSubmission(Long id) {
+        PersonalCauseSubmission submission = submissionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Submission not found with id: " + id));
+        
+        submissionRepository.delete(submission);
+    }
 }

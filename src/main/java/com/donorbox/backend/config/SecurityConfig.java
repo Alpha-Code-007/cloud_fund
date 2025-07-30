@@ -31,6 +31,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/public/blogs").permitAll()
+                .requestMatchers("/api/public/blogs/**").permitAll()
                 .requestMatchers("/api/images/**").permitAll()  // Allow public access to images
                 .requestMatchers("/api/documents/**").permitAll() // Allow public access to documents
                 .requestMatchers("/api/personal-cause-submissions/**").permitAll() // Allow public access to personal cause submissions

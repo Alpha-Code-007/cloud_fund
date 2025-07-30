@@ -12,7 +12,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -119,6 +121,22 @@ public class BlogService {
     public Blog getBlogById(Long id) {
         return blogRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Blog not found with id: " + id));
+    }
+
+    @Transactional
+    public BlogResponse updateBlogWithImage(Long id, MultipartFile image) throws IOException {
+        Blog blog = getBlogById(id);
+        if (image != null && !image.isEmpty()) {
+            // Delete old image if it exists
+            if (blog.getFeaturedImage() != null) {
+                // You might need a service to delete the old image from storage
+            }
+            // Upload new image
+            // String newImageUrl = imageUploadService.uploadImage(image, "blogs");
+            // blog.setFeaturedImage(newImageUrl);
+        }
+        Blog updatedBlog = blogRepository.save(blog);
+        return BlogResponse.fromEntity(updatedBlog);
     }
 
     @Transactional

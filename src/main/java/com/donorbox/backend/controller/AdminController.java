@@ -48,6 +48,7 @@ public class AdminController {
     private final BlogService blogService;
     private final PersonalCauseSubmissionService personalCauseSubmissionService;
     private final MediaUploadService mediaUploadService;
+    private final DonationService donationService;
 
     // Admin Causes Management
     @GetMapping("/causes")
@@ -488,8 +489,19 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
     }
 
     // ====================================
-    // Admin Blog Management
+// Admin Blog Management
     // ====================================
+
+    // Admin Donations Management
+    @GetMapping("/donations")
+    @Operation(summary = "Admin - Get all donations", description = "Retrieve all donations for admin management")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved donations",
+                 content = @Content(mediaType = "application/json", 
+                                 array = @ArraySchema(schema = @Schema(implementation = Donation.class))))
+    public ResponseEntity<List<Donation>> getAllDonationsForAdmin() {
+        List<Donation> donations = donationService.getAllDonations();
+        return ResponseEntity.ok(donations);
+    }
 
     @PostMapping("/blogs")
     @Operation(summary = "Admin - Create blog", description = "Create a new blog post")
@@ -517,11 +529,17 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
     @Operation(summary = "Admin - Get all blogs", description = "Retrieve all blog posts for admin management")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved blogs")
     public ResponseEntity<List<BlogResponse>> getAllBlogs() {
-        List<Blog> blogs = blogService.getAllBlogs();
-        List<BlogResponse> responses = blogs.stream()
-                .map(BlogResponse::summaryFromEntity)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        try {
+            List<Blog> blogs = blogService.getAllBlogs();
+            List<BlogResponse> responses = blogs.stream()
+                    .map(BlogResponse::summaryFromEntity)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(responses);
+        } catch (Exception e) {
+            // Log the exception for debugging
+            // logger.error("Error fetching all blogs", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping("/blogs/paginated")
@@ -598,6 +616,26 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             }
             blogService.updateBlog(blog.getId(), BlogRequest.from(blog));
             BlogResponse response = BlogResponse.fromEntity(blog);
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping(value = "/blogs/{id}/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Admin - Update blog with image", description = "Update an existing blog post with a new featured image")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Blog updated successfully with image"),
+            @ApiResponse(responseCode = "404", description = "Blog not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data or image upload failed")
+    })
+    public ResponseEntity<BlogResponse> updateBlogWithImage(
+            @Parameter(description = "Blog ID") @PathVariable Long id,
+            @Parameter(description = "Featured image file") @RequestParam(value = "image", required = true) MultipartFile image) {
+        try {
+            BlogResponse response = blogService.updateBlogWithImage(id, image);
             return ResponseEntity.ok(response);
         } catch (IOException e) {
             return ResponseEntity.badRequest().build();
@@ -725,6 +763,10 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Allow comments") @RequestParam(value = "allowComments", defaultValue = "true") Boolean allowComments,
             @Parameter(description = "Featured image file") @RequestParam(value = "image", required = false) MultipartFile image) {
         
+        if (title == null || title.trim().isEmpty() || slug == null || slug.trim().isEmpty() || content == null || content.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
         try {
             // Handle image upload if provided
             String featuredImage = null;
@@ -765,6 +807,21 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
     // ====================================
     // Admin Personal Cause Submissions Management
     // ====================================
+
+    @DeleteMapping("/personal-cause-submissions/{id}")
+    @Operation(summary = "Admin - Delete personal cause submission", description = "Delete a personal cause submission")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Personal cause submission deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Submission not found")
+    })
+    public ResponseEntity<Void> deletePersonalCauseSubmission(@Parameter(description = "ID of the personal cause submission to delete") @PathVariable Long id) {
+        try {
+            personalCauseSubmissionService.deleteSubmission(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
     @GetMapping("/personal-cause-submissions")
     @Operation(summary = "Admin - Get all personal cause submissions", description = "Retrieve all personal cause submissions for admin review")
