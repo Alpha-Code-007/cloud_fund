@@ -61,6 +61,66 @@ public class AdminController {
         return ResponseEntity.ok(causes);
     }
 
+    @PutMapping(value = "/blogs/{id}/update-with-content-and-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Admin - Update blog with content and image", description = "Update an existing blog post with both content changes and optional featured image replacement")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Blog updated successfully with content and image"),
+            @ApiResponse(responseCode = "404", description = "Blog not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data or image upload failed")
+    })
+    public ResponseEntity<BlogResponse> updateBlogWithContentAndImage(
+            @Parameter(description = "Blog ID") @PathVariable Long id,
+            @Parameter(description = "Blog title") @RequestParam(value = "title", required = false) String title,
+            @Parameter(description = "Blog subtitle") @RequestParam(value = "subtitle", required = false) String subtitle,
+            @Parameter(description = "Blog slug") @RequestParam(value = "slug", required = false) String slug,
+            @Parameter(description = "Blog content") @RequestParam(value = "content", required = false) String content,
+            @Parameter(description = "Blog excerpt") @RequestParam(value = "excerpt", required = false) String excerpt,
+            @Parameter(description = "Author name") @RequestParam(value = "author", required = false) String author,
+            @Parameter(description = "Author email") @RequestParam(value = "authorEmail", required = false) String authorEmail,
+            @Parameter(description = "Blog status") @RequestParam(value = "status", required = false) String status,
+            @Parameter(description = "Tags (comma-separated)") @RequestParam(value = "tags", required = false) String tags,
+            @Parameter(description = "Meta title") @RequestParam(value = "metaTitle", required = false) String metaTitle,
+            @Parameter(description = "Meta description") @RequestParam(value = "metaDescription", required = false) String metaDescription,
+            @Parameter(description = "Is featured") @RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
+            @Parameter(description = "Allow comments") @RequestParam(value = "allowComments", required = false) Boolean allowComments,
+            @Parameter(description = "Featured image file") @RequestParam(value = "image", required = false) MultipartFile image) {
+        
+        try {
+            // Create blog request with only non-null values
+            BlogRequest.BlogRequestBuilder requestBuilder = BlogRequest.builder();
+            
+            if (title != null) requestBuilder.title(title);
+            if (subtitle != null) requestBuilder.subtitle(subtitle);
+            if (slug != null) requestBuilder.slug(slug);
+            if (content != null) {
+                requestBuilder.content(content);
+                // Auto-calculate reading time when content is updated
+                requestBuilder.readingTime(blogService.calculateReadingTime(content));
+            }
+            if (excerpt != null) requestBuilder.excerpt(excerpt);
+            if (author != null) requestBuilder.author(author);
+            if (authorEmail != null) requestBuilder.authorEmail(authorEmail);
+            if (status != null) requestBuilder.status(Blog.BlogStatus.valueOf(status.toUpperCase()));
+            if (tags != null) requestBuilder.tags(tags);
+            if (metaTitle != null) requestBuilder.metaTitle(metaTitle);
+            if (metaDescription != null) requestBuilder.metaDescription(metaDescription);
+            if (isFeatured != null) requestBuilder.isFeatured(isFeatured);
+            if (allowComments != null) requestBuilder.allowComments(allowComments);
+            
+            BlogRequest request = requestBuilder.build();
+            
+            BlogResponse response = blogService.updateBlogWithImageAndContent(id, request, image);
+            return ResponseEntity.ok(response);
+            
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @GetMapping("/causes/{id}")
     @Operation(summary = "Admin - Get cause by ID", description = "Retrieve specific cause for admin")
     @ApiResponses(value = {
@@ -608,14 +668,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Blog ID") @PathVariable Long id,
             @Parameter(description = "Featured image file") @RequestParam("image") MultipartFile image) {
         try {
-            Blog blog = blogService.getBlogById(id);
-            // Handle image upload if provided
-            if (image != null && !image.isEmpty()) {
-                String featuredImage = imageUploadService.uploadImage(image, "blogs");
-                blog.setFeaturedImage(featuredImage);
-            }
-            blogService.updateBlog(blog.getId(), BlogRequest.from(blog));
-            BlogResponse response = BlogResponse.fromEntity(blog);
+            BlogResponse response = blogService.updateBlogWithImage(id, image);
             return ResponseEntity.ok(response);
         } catch (IOException e) {
             return ResponseEntity.badRequest().build();

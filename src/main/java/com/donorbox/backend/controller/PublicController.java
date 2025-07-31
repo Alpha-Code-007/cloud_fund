@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
  
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
  
 @RestController
@@ -299,11 +300,18 @@ public class PublicController {
     @Operation(summary = "Get published blogs", description = "Retrieve all published blog posts")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved published blogs")
     public ResponseEntity<List<BlogResponse>> getPublishedBlogs() {
-        List<Blog> blogs = blogService.getPublishedBlogs();
-        List<BlogResponse> responses = blogs.stream()
-                .map(BlogResponse::summaryFromEntity)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        try {
+            List<Blog> blogs = blogService.getPublishedBlogs();
+            List<BlogResponse> responses = blogs.stream()
+                    .map(BlogResponse::summaryFromEntity)
+                    .collect(Collectors.toList());
+            log.info("Successfully retrieved {} published blogs", responses.size());
+            return ResponseEntity.ok(responses);
+        } catch (Exception e) {
+            log.error("Error retrieving published blogs", e);
+            // Return empty list instead of error to prevent frontend issues
+            return ResponseEntity.ok(new ArrayList<>());
+        }
     }
 
     @GetMapping("/blogs/{slug}")
@@ -334,10 +342,17 @@ public class PublicController {
     @Operation(summary = "Get featured blogs", description = "Retrieve featured blog posts")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved featured blogs")
     public ResponseEntity<List<BlogResponse>> getFeaturedBlogs() {
-        List<Blog> blogs = blogService.getFeaturedBlogs();
-        List<BlogResponse> responses = blogs.stream()
-                .map(BlogResponse::summaryFromEntity)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        try {
+            List<Blog> blogs = blogService.getFeaturedBlogs();
+            List<BlogResponse> responses = blogs.stream()
+                    .map(BlogResponse::summaryFromEntity)
+                    .collect(Collectors.toList());
+            log.info("Successfully retrieved {} featured blogs", responses.size());
+            return ResponseEntity.ok(responses);
+        } catch (Exception e) {
+            log.error("Error retrieving featured blogs", e);
+            // Return empty list instead of error to prevent frontend issues
+            return ResponseEntity.ok(new ArrayList<>());
+        }
     }
 }

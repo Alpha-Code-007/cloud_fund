@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 public class BlogService {
 
     private final BlogRepository blogRepository;
+    private final ImageUploadService imageUploadService;
 
     @Transactional
     public Blog createBlog(BlogRequest request) {
@@ -126,16 +128,90 @@ public class BlogService {
     @Transactional
     public BlogResponse updateBlogWithImage(Long id, MultipartFile image) throws IOException {
         Blog blog = getBlogById(id);
+        
         if (image != null && !image.isEmpty()) {
             // Delete old image if it exists
-            if (blog.getFeaturedImage() != null) {
-                // You might need a service to delete the old image from storage
+            if (blog.getFeaturedImage() != null && !blog.getFeaturedImage().trim().isEmpty()) {
+                boolean deleted = imageUploadService.deleteImage(blog.getFeaturedImage());
+                if (deleted) {
+                    log.info("Successfully deleted old featured image: {}", blog.getFeaturedImage());
+                } else {
+                    log.warn("Failed to delete old featured image: {}", blog.getFeaturedImage());
+                }
             }
+            
             // Upload new image
-            // String newImageUrl = imageUploadService.uploadImage(image, "blogs");
-            // blog.setFeaturedImage(newImageUrl);
+            String newImagePath = imageUploadService.uploadImage(image, "blogs");
+            blog.setFeaturedImage(newImagePath);
+            log.info("Successfully uploaded new featured image: {}", newImagePath);
         }
+        
         Blog updatedBlog = blogRepository.save(blog);
+        log.info("Blog updated with new featured image for ID: {}", updatedBlog.getId());
+        return BlogResponse.fromEntity(updatedBlog);
+    }
+
+    @Transactional
+    public BlogResponse updateBlogWithImageAndContent(Long id, BlogRequest request, MultipartFile image) throws IOException {
+        Blog existingBlog = getBlogById(id);
+        
+        // Handle image upload/replacement if provided
+        if (image != null && !image.isEmpty()) {
+            // Delete old image if it exists
+            if (existingBlog.getFeaturedImage() != null && !existingBlog.getFeaturedImage().trim().isEmpty()) {
+                boolean deleted = imageUploadService.deleteImage(existingBlog.getFeaturedImage());
+                if (deleted) {
+                    log.info("Successfully deleted old featured image: {}", existingBlog.getFeaturedImage());
+                } else {
+                    log.warn("Failed to delete old featured image: {}", existingBlog.getFeaturedImage());
+                }
+            }
+            
+            // Upload new image
+            String newImagePath = imageUploadService.uploadImage(image, "blogs");
+            existingBlog.setFeaturedImage(newImagePath);
+            log.info("Successfully uploaded new featured image: {}", newImagePath);
+        }
+        
+        // Update other fields from request
+        if (request.getTitle() != null) existingBlog.setTitle(request.getTitle());
+        if (request.getSubtitle() != null) existingBlog.setSubtitle(request.getSubtitle());
+        if (request.getSlug() != null && !existingBlog.getSlug().equals(request.getSlug())) {
+            // Check if slug conflicts with another blog
+            blogRepository.findBySlug(request.getSlug())
+                    .ifPresent(blog -> {
+                        if (!blog.getId().equals(id)) {
+                            throw new IllegalArgumentException("Blog with slug '" + request.getSlug() + "' already exists");
+                        }
+                    });
+            existingBlog.setSlug(request.getSlug());
+        }
+        if (request.getContent() != null) existingBlog.setContent(request.getContent());
+        if (request.getExcerpt() != null) existingBlog.setExcerpt(request.getExcerpt());
+        if (request.getAuthor() != null) existingBlog.setAuthor(request.getAuthor());
+        if (request.getAuthorEmail() != null) existingBlog.setAuthorEmail(request.getAuthorEmail());
+        if (request.getReadingTime() != null) existingBlog.setReadingTime(request.getReadingTime());
+        if (request.getTags() != null) existingBlog.setTags(request.getTags());
+        if (request.getMetaTitle() != null) existingBlog.setMetaTitle(request.getMetaTitle());
+        if (request.getMetaDescription() != null) existingBlog.setMetaDescription(request.getMetaDescription());
+        if (request.getIsFeatured() != null) existingBlog.setIsFeatured(request.getIsFeatured());
+        if (request.getAllowComments() != null) existingBlog.setAllowComments(request.getAllowComments());
+        
+        // Handle status change
+        if (request.getStatus() != null) {
+            Blog.BlogStatus oldStatus = existingBlog.getStatus();
+            existingBlog.setStatus(request.getStatus());
+            
+            // Set or clear published date based on status
+            if (Blog.BlogStatus.PUBLISHED.equals(request.getStatus()) && !Blog.BlogStatus.PUBLISHED.equals(oldStatus)) {
+                existingBlog.setPublishedAt(LocalDateTime.now());
+            } else if (!Blog.BlogStatus.PUBLISHED.equals(request.getStatus()) && Blog.BlogStatus.PUBLISHED.equals(oldStatus)) {
+                existingBlog.setPublishedAt(null);
+            }
+        }
+        
+        Blog updatedBlog = blogRepository.save(existingBlog);
+        log.info("Blog updated with content and image for ID: {}", updatedBlog.getId());
         return BlogResponse.fromEntity(updatedBlog);
     }
 
@@ -159,10 +235,23 @@ public class BlogService {
 
     @Transactional(readOnly = true)
     public List<Blog> getPublishedBlogs() {
-        return blogRepository.findByStatus(Blog.BlogStatus.PUBLISHED)
-                .stream()
-                .sorted((b1, b2) -> b2.getPublishedAt().compareTo(b1.getPublishedAt()))
-                .collect(Collectors.toList());
+        try {
+            List<Blog> publishedBlogs = blogRepository.findByStatus(Blog.BlogStatus.PUBLISHED);
+            log.info("Found {} published blogs", publishedBlogs.size());
+            
+            return publishedBlogs.stream()
+                    .sorted((b1, b2) -> {
+                        // Handle null publishedAt values gracefully
+                        LocalDateTime date1 = b1.getPublishedAt() != null ? b1.getPublishedAt() : b1.getCreatedAt();
+                        LocalDateTime date2 = b2.getPublishedAt() != null ? b2.getPublishedAt() : b2.getCreatedAt();
+                        return date2.compareTo(date1); // Most recent first
+                    })
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error fetching published blogs", e);
+            // Return empty list instead of throwing exception to prevent 401 errors
+            return new ArrayList<>();
+        }
     }
 
     @Transactional(readOnly = true)
@@ -174,11 +263,22 @@ public class BlogService {
 
     @Transactional(readOnly = true)
     public List<Blog> getFeaturedBlogs() {
-        return blogRepository.findAll().stream()
-                .filter(blog -> Blog.BlogStatus.PUBLISHED.equals(blog.getStatus()) && 
-                               Boolean.TRUE.equals(blog.getIsFeatured()))
-                .sorted((b1, b2) -> b2.getPublishedAt().compareTo(b1.getPublishedAt()))
-                .collect(Collectors.toList());
+        try {
+            return blogRepository.findAll().stream()
+                    .filter(blog -> Blog.BlogStatus.PUBLISHED.equals(blog.getStatus()) && 
+                                   Boolean.TRUE.equals(blog.getIsFeatured()))
+                    .sorted((b1, b2) -> {
+                        // Handle null publishedAt values gracefully
+                        LocalDateTime date1 = b1.getPublishedAt() != null ? b1.getPublishedAt() : b1.getCreatedAt();
+                        LocalDateTime date2 = b2.getPublishedAt() != null ? b2.getPublishedAt() : b2.getCreatedAt();
+                        return date2.compareTo(date1); // Most recent first
+                    })
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error fetching featured blogs", e);
+            // Return empty list instead of throwing exception
+            return new ArrayList<>();
+        }
     }
 
     @Transactional
