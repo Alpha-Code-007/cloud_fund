@@ -5,6 +5,7 @@ import com.donorbox.backend.dto.PersonalCauseSubmissionResponse;
 import com.donorbox.backend.service.PersonalCauseSubmissionService;
 import com.donorbox.backend.service.ImageUploadService;
 import com.donorbox.backend.service.DocumentUploadService;
+import com.donorbox.backend.service.MediaUploadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -34,6 +35,7 @@ public class PersonalCauseSubmissionController {
     private final PersonalCauseSubmissionService submissionService;
     private final ImageUploadService imageUploadService;
     private final DocumentUploadService documentUploadService;
+    private final MediaUploadService mediaUploadService;
 
     @PostMapping
     @Operation(summary = "Submit personal cause", description = "Submit a personal cause for admin approval")
@@ -67,13 +69,20 @@ public class PersonalCauseSubmissionController {
             @Parameter(description = "Submitter email") @RequestParam("submitterEmail") String submitterEmail,
             @Parameter(description = "Submitter phone") @RequestParam(value = "submitterPhone", required = false) String submitterPhone,
             @Parameter(description = "Submitter message") @RequestParam(value = "submitterMessage", required = false) String submitterMessage,
-            @Parameter(description = "Image file") @RequestParam(value = "image", required = false) MultipartFile image) {
+            @Parameter(description = "Image file") @RequestParam(value = "image", required = false) MultipartFile image,
+            @Parameter(description = "Video file") @RequestParam(value = "video", required = false) MultipartFile video) {
         
         try {
             // Handle image upload if provided
             String imageUrl = null;
             if (image != null && !image.isEmpty()) {
                 imageUrl = imageUploadService.uploadImage(image, "personal-causes");
+            }
+            
+            // Handle video upload if provided
+            String videoUrl = null;
+            if (video != null && !video.isEmpty()) {
+                videoUrl = mediaUploadService.uploadVideo(video, "personal-causes");
             }
             
             // Create request object
@@ -91,7 +100,7 @@ public class PersonalCauseSubmissionController {
                     .submitterMessage(submitterMessage)
                     .build();
             
-            PersonalCauseSubmissionResponse response = submissionService.createSubmission(request, imageUrl);
+            PersonalCauseSubmissionResponse response = submissionService.createSubmission(request, imageUrl, videoUrl);
             
             return new ResponseEntity<>(response, HttpStatus.CREATED);
             
@@ -159,7 +168,7 @@ public class PersonalCauseSubmissionController {
                     .build();
             
             PersonalCauseSubmissionResponse response = submissionService.createSubmission(
-                    request, imageUrl, proofDocumentUrl, proofDocumentName, proofDocumentType);
+                    request, imageUrl, null, proofDocumentUrl, proofDocumentName, proofDocumentType);
             
             return new ResponseEntity<>(response, HttpStatus.CREATED);
             

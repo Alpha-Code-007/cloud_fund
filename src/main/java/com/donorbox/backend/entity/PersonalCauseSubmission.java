@@ -44,8 +44,11 @@ public class PersonalCauseSubmission {
     @Column(name = "target_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal targetAmount;
 
-    @Column(name = "image_url")
+@Column(name = "image_url")
     private String imageUrl;
+
+    @Column(name = "video_url")
+    private String videoUrl;
 
     @Column(name = "proof_document_url")
     private String proofDocumentUrl;

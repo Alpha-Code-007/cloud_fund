@@ -49,23 +49,28 @@ public class PersonalCauseSubmissionService {
         return createSubmission(request, null);
     }
 
-    @Transactional
-    public PersonalCauseSubmissionResponse createSubmission(PersonalCauseSubmissionRequest request, String imageUrl) {
-        return createSubmission(request, imageUrl, null, null, null);
-    }
+@Transactional
+public PersonalCauseSubmissionResponse createSubmission(PersonalCauseSubmissionRequest request, String imageUrl) {
+    return createSubmission(request, imageUrl, null, null, null, null);
+}
 
-    @Transactional
-    public PersonalCauseSubmissionResponse createSubmission(PersonalCauseSubmissionRequest request, String imageUrl, 
-                                                          String proofDocumentUrl, String proofDocumentName, String proofDocumentType) {
+@Transactional
+public PersonalCauseSubmissionResponse createSubmission(PersonalCauseSubmissionRequest request, String imageUrl, String videoUrl) {
+    return createSubmission(request, imageUrl, videoUrl, null, null, null);
+}
+
+@Transactional
+    public PersonalCauseSubmissionResponse createSubmission(PersonalCauseSubmissionRequest request, String imageUrl, String videoUrl, String proofDocumentUrl, String proofDocumentName, String proofDocumentType) {
         PersonalCauseSubmission submission = PersonalCauseSubmission.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .shortDescription(request.getShortDescription())
                 .targetAmount(request.getTargetAmount())
                 .imageUrl(imageUrl)
+                .videoUrl(videoUrl)
                 .proofDocumentUrl(proofDocumentUrl)
                 .proofDocumentName(proofDocumentName)
-                .proofDocumentType(proofDocumentType)
+.proofDocumentType(proofDocumentType)
                 .submitterName(request.getSubmitterName())
                 .submitterEmail(request.getSubmitterEmail())
                 .submitterPhone(request.getSubmitterPhone())
@@ -111,13 +116,25 @@ public class PersonalCauseSubmissionService {
         submission.setApprovedBy(actionRequest.getApprovedBy());
         submission.setAdminNotes(actionRequest.getAdminNotes());
 
-        // Create Cause entity
+// Create Cause entity
+        // Determine media type based on what's available
+        Cause.MediaType mediaType = Cause.MediaType.NONE;
+        if (submission.getImageUrl() != null && submission.getVideoUrl() != null) {
+            mediaType = Cause.MediaType.BOTH;
+        } else if (submission.getImageUrl() != null) {
+            mediaType = Cause.MediaType.IMAGE;
+        } else if (submission.getVideoUrl() != null) {
+            mediaType = Cause.MediaType.VIDEO;
+        }
+        
         Cause cause = Cause.builder()
                 .title(actionRequest.getModifiedTitle() != null ? actionRequest.getModifiedTitle() : submission.getTitle())
                 .description(actionRequest.getModifiedDescription() != null ? actionRequest.getModifiedDescription() : submission.getDescription())
                 .shortDescription(actionRequest.getModifiedShortDescription() != null ? actionRequest.getModifiedShortDescription() : submission.getShortDescription())
                 .targetAmount(submission.getTargetAmount())
                 .imageUrl(submission.getImageUrl())
+                .videoUrl(submission.getVideoUrl())
+                .mediaType(mediaType)
                 .category(actionRequest.getModifiedCategory() != null ? actionRequest.getModifiedCategory() : submission.getCategory())
                 .location(actionRequest.getModifiedLocation() != null ? actionRequest.getModifiedLocation() : submission.getLocation())
                 .endDate(submission.getEndDate())
