@@ -136,9 +136,20 @@ public class ImageUploadService {
     private Path createUploadDirectory(String category) throws IOException {
         Path uploadPath = Paths.get(uploadDir).resolve(category);
         
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-            log.info("Created upload directory: {}", uploadPath.toString());
+        try {
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+                log.info("Created upload directory: {}", uploadPath.toString());
+            }
+            
+            // Test write permissions
+            if (!Files.isWritable(uploadPath)) {
+                throw new IOException("Upload directory is not writable: " + uploadPath.toString());
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to create or access upload directory: {}", uploadPath.toString(), e);
+            throw new IOException("Cannot create upload directory: " + e.getMessage(), e);
         }
         
         return uploadPath;

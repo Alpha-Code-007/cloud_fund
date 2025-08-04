@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -596,9 +597,12 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
                     .collect(Collectors.toList());
             return ResponseEntity.ok(responses);
         } catch (Exception e) {
-            // Log the exception for debugging
-            // logger.error("Error fetching all blogs", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            // Enhanced error logging for production debugging
+            System.err.println("ERROR in getAllBlogs: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Return empty list instead of 500 error to prevent frontend crashes
+            return ResponseEntity.ok(new ArrayList<>());
         }
     }
 
@@ -800,7 +804,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @ApiResponse(responseCode = "201", description = "Blog created successfully with image"),
             @ApiResponse(responseCode = "400", description = "Invalid request data or image upload failed")
     })
-    public ResponseEntity<BlogResponse> createBlogWithImage(
+    public ResponseEntity<?> createBlogWithImage(
             @Parameter(description = "Blog title") @RequestParam("title") String title,
             @Parameter(description = "Blog subtitle") @RequestParam(value = "subtitle", required = false) String subtitle,
             @Parameter(description = "Blog slug") @RequestParam("slug") String slug,
@@ -816,10 +820,16 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Allow comments") @RequestParam(value = "allowComments", defaultValue = "true") Boolean allowComments,
             @Parameter(description = "Featured image file") @RequestParam(value = "image", required = false) MultipartFile image) {
         
-        if (title == null || title.trim().isEmpty() || slug == null || slug.trim().isEmpty() || content == null || content.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
+        if (title == null || title.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Title is required.");
         }
-        
+        if (slug == null || slug.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Slug is required.");
+        }
+        if (content == null || content.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Content is required.");
+        }
+
         try {
             // Handle image upload if provided
             String featuredImage = null;
@@ -851,9 +861,9 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             return new ResponseEntity<>(response, HttpStatus.CREATED);
             
         } catch (IOException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("Image upload failed: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
     }
 
