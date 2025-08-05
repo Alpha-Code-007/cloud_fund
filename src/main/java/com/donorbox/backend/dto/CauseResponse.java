@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Data
@@ -113,7 +114,7 @@ public class CauseResponse {
         }
         
         BigDecimal currentAmount = cause.getCurrentAmount() != null ? cause.getCurrentAmount() : BigDecimal.ZERO;
-        return currentAmount.divide(cause.getTargetAmount(), 4, BigDecimal.ROUND_HALF_UP)
+        return currentAmount.divide(cause.getTargetAmount(), 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
                 .doubleValue();
     }

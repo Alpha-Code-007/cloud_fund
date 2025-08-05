@@ -51,12 +51,77 @@ public class PersonalCauseSubmissionController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @PostMapping(value = "/with-media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Submit personal cause with media", description = "Submit a personal cause with unified media upload (auto-detects image/video) for admin approval")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Cause submission created successfully with media"),
+            @ApiResponse(responseCode = "400", description = "Invalid submission data or media upload failed")
+    })
+    public ResponseEntity<PersonalCauseSubmissionResponse> submitPersonalCauseWithMedia(
+            @Parameter(description = "Cause title") @RequestParam("title") String title,
+            @Parameter(description = "Cause description") @RequestParam("description") String description,
+            @Parameter(description = "Short description") @RequestParam(value = "shortDescription", required = false) String shortDescription,
+            @Parameter(description = "Target amount") @RequestParam("targetAmount") String targetAmount,
+            @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
+            @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
+            @Parameter(description = "End date (ISO format)") @RequestParam(value = "endDate", required = false) String endDate,
+            @Parameter(description = "Submitter name") @RequestParam("submitterName") String submitterName,
+            @Parameter(description = "Submitter email") @RequestParam("submitterEmail") String submitterEmail,
+            @Parameter(description = "Submitter phone") @RequestParam(value = "submitterPhone", required = false) String submitterPhone,
+            @Parameter(description = "Submitter message") @RequestParam(value = "submitterMessage", required = false) String submitterMessage,
+            @Parameter(description = "Media file (image or video - auto-detected)") @RequestParam(value = "media", required = false) MultipartFile media) {
+        
+        try {
+            String imageUrl = null;
+            String videoUrl = null;
+            
+            // Handle unified media upload if provided
+            if (media != null && !media.isEmpty()) {
+                String mediaPath = mediaUploadService.uploadMedia(media, "personal-causes");
+                
+                // Determine if uploaded file is image or video
+                if (mediaUploadService.isImageFile(media.getOriginalFilename())) {
+                    imageUrl = mediaPath;
+                } else if (mediaUploadService.isVideoFile(media.getOriginalFilename())) {
+                    videoUrl = mediaPath;
+                }
+            }
+            
+            // Create request object
+            PersonalCauseSubmissionRequest request = PersonalCauseSubmissionRequest.builder()
+                    .title(title)
+                    .description(description)
+                    .shortDescription(shortDescription)
+                    .targetAmount(new BigDecimal(targetAmount))
+                    .category(category)
+                    .location(location)
+                    .endDate(endDate != null ? LocalDateTime.parse(endDate) : null)
+                    .submitterName(submitterName)
+                    .submitterEmail(submitterEmail)
+                    .submitterPhone(submitterPhone)
+                    .submitterMessage(submitterMessage)
+                    .build();
+            
+            PersonalCauseSubmissionResponse response = submissionService.createSubmission(request, imageUrl, videoUrl);
+            
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @PostMapping(value = "/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Submit personal cause with image", description = "Submit a personal cause with image upload for admin approval")
+    @Operation(summary = "Submit personal cause with image (deprecated)", description = "Submit a personal cause with image upload for admin approval - use /with-media instead")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Cause submission created successfully with image"),
             @ApiResponse(responseCode = "400", description = "Invalid submission data or image upload failed")
     })
+    @Deprecated
     public ResponseEntity<PersonalCauseSubmissionResponse> submitPersonalCauseWithImage(
             @Parameter(description = "Cause title") @RequestParam("title") String title,
             @Parameter(description = "Cause description") @RequestParam("description") String description,
