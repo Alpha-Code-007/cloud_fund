@@ -531,10 +531,24 @@ public class MediaController {
         Map<String, String> response = new HashMap<>();
         
         try {
+            // Validate input parameters
+            if (file == null) {
+                response.put("error", "No file provided");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
             if (file.isEmpty()) {
                 response.put("error", "Please select a media file to upload");
                 return ResponseEntity.badRequest().body(response);
             }
+            
+            if (category == null || category.trim().isEmpty()) {
+                response.put("error", "Category is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            log.info("Starting media upload: file={}, size={}, category={}", 
+                    file.getOriginalFilename(), file.getSize(), category);
             
             String relativePath = mediaUploadService.uploadMedia(file, category);
             String fullUrl = mediaUploadService.getMediaUrl(relativePath);
@@ -553,15 +567,20 @@ public class MediaController {
             response.put("filename", file.getOriginalFilename());
             response.put("category", category);
             response.put("mediaType", mediaType);
+            response.put("fileSize", String.valueOf(file.getSize()));
             
             log.info("Media uploaded successfully: {} -> {}", file.getOriginalFilename(), relativePath);
             
             return ResponseEntity.ok(response);
             
         } catch (IOException e) {
-            log.error("Error uploading media: {}", e.getMessage(), e);
+            log.error("IOException during media upload: {}", e.getMessage(), e);
             response.put("error", "Failed to upload media: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            log.error("Unexpected error during media upload: {}", e.getMessage(), e);
+            response.put("error", "Unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 

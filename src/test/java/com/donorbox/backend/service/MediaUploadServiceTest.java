@@ -54,12 +54,12 @@ class MediaUploadServiceTest {
     @Test
     void testGetMediaType() {
         // Test image media type
-        assertEquals(MediaUploadService.MediaType.IMAGE, mediaUploadService.getMediaType("test.jpg"));
-        assertEquals(MediaUploadService.MediaType.IMAGE, mediaUploadService.getMediaType("test.png"));
+        assertEquals(MediaUploadService.FileMediaType.IMAGE, mediaUploadService.getMediaType("test.jpg"));
+        assertEquals(MediaUploadService.FileMediaType.IMAGE, mediaUploadService.getMediaType("test.png"));
         
         // Test video media type
-        assertEquals(MediaUploadService.MediaType.VIDEO, mediaUploadService.getMediaType("test.mp4"));
-        assertEquals(MediaUploadService.MediaType.VIDEO, mediaUploadService.getMediaType("test.avi"));
+        assertEquals(MediaUploadService.FileMediaType.VIDEO, mediaUploadService.getMediaType("test.mp4"));
+        assertEquals(MediaUploadService.FileMediaType.VIDEO, mediaUploadService.getMediaType("test.avi"));
         
         // Test unknown media type
         assertNull(mediaUploadService.getMediaType("test.txt"));
@@ -88,7 +88,7 @@ class MediaUploadServiceTest {
     @Test
     void testGetMediaUrl() {
         String relativePath = "personal-causes/test.jpg";
-        String expectedUrl = "https://cloud-fund-i1kt.onrender.com/api/media/" + relativePath;
+        String expectedUrl = "http://localhost:8080/api/media/" + relativePath;
         
         assertEquals(expectedUrl, mediaUploadService.getMediaUrl(relativePath));
         assertNull(mediaUploadService.getMediaUrl(null));

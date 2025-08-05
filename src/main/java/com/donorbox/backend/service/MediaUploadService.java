@@ -26,6 +26,9 @@ public class MediaUploadService {
     @Value("${server.port:8080}")
     private String serverPort;
 
+    @Value("${app.base.url:http://localhost}")
+    private String baseUrl;
+
     // Image file extensions
     private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList(
         "jpg", "jpeg", "png", "gif", "webp", "bmp", "tiff", "svg"
@@ -126,7 +129,9 @@ public class MediaUploadService {
         if (relativePath == null || relativePath.trim().isEmpty()) {
             return null;
         }
-        return "https://cloud-fund-i1kt.onrender.com/api/media/" + relativePath;
+        // Build URL dynamically based on configuration
+        String port = serverPort.equals("8080") ? "" : ":" + serverPort;
+        return baseUrl + port + "/api/media/" + relativePath;
     }
 
     /**
@@ -168,13 +173,13 @@ public class MediaUploadService {
     /**
      * Get the media type based on file extension
      * @param filename The filename to check
-     * @return MediaType enum (IMAGE, VIDEO, or null if unknown)
+     * @return FileMediaType enum (IMAGE, VIDEO, or null if unknown)
      */
-    public MediaType getMediaType(String filename) {
+    public FileMediaType getMediaType(String filename) {
         if (isImageFile(filename)) {
-            return MediaType.IMAGE;
+            return FileMediaType.IMAGE;
         } else if (isVideoFile(filename)) {
-            return MediaType.VIDEO;
+            return FileMediaType.VIDEO;
         }
         return null;
     }
@@ -311,9 +316,20 @@ public class MediaUploadService {
     private Path createUploadDirectory(String category) throws IOException {
         Path uploadPath = Paths.get(uploadDir).resolve(category);
         
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-            log.info("Created upload directory: {}", uploadPath.toString());
+        try {
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+                log.info("Created upload directory: {}", uploadPath.toString());
+            }
+            
+            // Test write permissions
+            if (!Files.isWritable(uploadPath)) {
+                throw new IOException("Upload directory is not writable: " + uploadPath.toString());
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to create or access upload directory: {}", uploadPath.toString(), e);
+            throw new IOException("Cannot create upload directory: " + e.getMessage(), e);
         }
         
         return uploadPath;
@@ -335,7 +351,7 @@ public class MediaUploadService {
         return filename.substring(lastDotIndex + 1);
     }
 
-    public enum MediaType {
+    public enum FileMediaType {
         IMAGE, VIDEO
     }
 }
