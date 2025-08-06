@@ -20,6 +20,7 @@ public class PersonalCauseSubmissionResponse {
     private String shortDescription;
     private BigDecimal targetAmount;
     private String imageUrl;
+    private String videoUrl;
     private String proofDocumentUrl;
     private String proofDocumentName;
     private String proofDocumentType;
@@ -52,6 +53,7 @@ public class PersonalCauseSubmissionResponse {
                 .shortDescription(submission.getShortDescription())
                 .targetAmount(submission.getTargetAmount())
                 .imageUrl(submission.getImageUrl())
+                .videoUrl(submission.getVideoUrl())
                 .proofDocumentUrl(submission.getProofDocumentUrl())
                 .proofDocumentName(submission.getProofDocumentName())
                 .proofDocumentType(submission.getProofDocumentType())
@@ -77,15 +79,28 @@ public class PersonalCauseSubmissionResponse {
         return PersonalCauseSubmissionResponse.builder()
                 .id(submission.getId())
                 .title(submission.getTitle())
+                .description(submission.getDescription())
                 .shortDescription(submission.getShortDescription())
                 .targetAmount(submission.getTargetAmount())
                 .imageUrl(submission.getImageUrl())
+                .videoUrl(submission.getVideoUrl())
+                .proofDocumentUrl(submission.getProofDocumentUrl())
+                .proofDocumentName(submission.getProofDocumentName())
+                .proofDocumentType(submission.getProofDocumentType())
                 .category(submission.getCategory())
                 .location(submission.getLocation())
+                .endDate(submission.getEndDate())
                 .submitterName(submission.getSubmitterName())
                 .submitterEmail(submission.getSubmitterEmail())
+                .submitterPhone(submission.getSubmitterPhone())
+                .submitterMessage(submission.getSubmitterMessage())
                 .status(submission.getStatus())
+                .adminNotes(submission.getAdminNotes())
+                .approvedBy(submission.getApprovedBy())
+                .approvedAt(submission.getApprovedAt())
+                .rejectedAt(submission.getRejectedAt())
                 .createdAt(submission.getCreatedAt())
+                .updatedAt(submission.getUpdatedAt())
                 .causeId(submission.getCauseId())
                 .build();
     }

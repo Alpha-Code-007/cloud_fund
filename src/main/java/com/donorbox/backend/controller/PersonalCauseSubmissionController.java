@@ -334,6 +334,14 @@ public class PersonalCauseSubmissionController {
         }
     }
 
+    @GetMapping
+    @Operation(summary = "Get all personal cause submissions", description = "Get all personal cause submissions (admin endpoint)")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved all submissions")
+    public ResponseEntity<List<PersonalCauseSubmissionResponse>> getAllSubmissions() {
+        List<PersonalCauseSubmissionResponse> submissions = submissionService.getAllSubmissions();
+        return ResponseEntity.ok(submissions);
+    }
+
     @GetMapping("/by-email/{email}")
     @Operation(summary = "Get submissions by email", description = "Get all submissions by a specific submitter email")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved submissions")
