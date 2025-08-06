@@ -52,8 +52,8 @@ public class PersonalCauseSubmissionController {
     }
 
     @PostMapping(value = "/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Submit personal cause with media files", 
-               description = "Submit a personal cause with optional image and/or video files for admin approval. Supports both images and videos in a single request.")
+    @Operation(summary = "Submit personal cause with media and document", 
+               description = "Submit a personal cause with 2 file inputs: 'media' (image OR video - auto-detected) and 'proofDocument' (PDF, DOC, etc.)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Cause submission created successfully with media"),
             @ApiResponse(responseCode = "400", description = "Invalid submission data or media upload failed")
@@ -70,9 +70,8 @@ public class PersonalCauseSubmissionController {
             @Parameter(description = "Submitter email") @RequestParam("submitterEmail") String submitterEmail,
             @Parameter(description = "Submitter phone") @RequestParam(value = "submitterPhone", required = false) String submitterPhone,
             @Parameter(description = "Submitter message") @RequestParam(value = "submitterMessage", required = false) String submitterMessage,
-            @Parameter(description = "Image file (JPG, PNG, GIF, WEBP, etc.)") @RequestParam(value = "image", required = false) MultipartFile image,
-            @Parameter(description = "Video file (MP4, AVI, MOV, WEBM, etc.)") @RequestParam(value = "video", required = false) MultipartFile video,
-            @Parameter(description = "Proof document file (PDF, JPG, PNG, DOC, etc.)") @RequestParam(value = "proofDocument", required = false) MultipartFile proofDocument) {
+            @Parameter(description = "Media file (image or video - auto-detected). Accepts: JPG, PNG, GIF, WEBP, MP4, AVI, MOV, WEBM, etc.") @RequestParam(value = "media", required = false) MultipartFile media,
+            @Parameter(description = "Proof document file (PDF, DOC, DOCX, JPG, PNG, etc.)") @RequestParam(value = "proofDocument", required = false) MultipartFile proofDocument) {
         
         try {
             String imageUrl = null;
@@ -81,14 +80,16 @@ public class PersonalCauseSubmissionController {
             String proofDocumentName = null;
             String proofDocumentType = null;
             
-            // Handle image upload if provided
-            if (image != null && !image.isEmpty()) {
-                imageUrl = imageUploadService.uploadImage(image, "personal-causes");
-            }
-            
-            // Handle video upload if provided
-            if (video != null && !video.isEmpty()) {
-                videoUrl = mediaUploadService.uploadVideo(video, "personal-causes");
+            // Handle unified media upload if provided (auto-detects image or video)
+            if (media != null && !media.isEmpty()) {
+                String mediaPath = mediaUploadService.uploadMedia(media, "personal-causes");
+                
+                // Determine if uploaded file is image or video
+                if (mediaUploadService.isImageFile(media.getOriginalFilename())) {
+                    imageUrl = mediaPath;
+                } else if (mediaUploadService.isVideoFile(media.getOriginalFilename())) {
+                    videoUrl = mediaPath;
+                }
             }
             
             // Handle proof document upload if provided
