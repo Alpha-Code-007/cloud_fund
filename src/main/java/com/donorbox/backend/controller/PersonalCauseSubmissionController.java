@@ -38,7 +38,7 @@ public class PersonalCauseSubmissionController {
     private final MediaUploadService mediaUploadService;
 
     @PostMapping
-    @Operation(summary = "Submit personal cause", description = "Submit a personal cause for admin approval")
+    @Operation(summary = "Submit personal cause (JSON only)", description = "Submit a personal cause for admin approval - JSON data only, no file uploads")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Cause submission created successfully",
                         content = @Content(mediaType = "application/json", 
@@ -49,6 +49,82 @@ public class PersonalCauseSubmissionController {
             @Valid @RequestBody PersonalCauseSubmissionRequest request) {
         PersonalCauseSubmissionResponse response = submissionService.createSubmission(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Submit personal cause with media files", 
+               description = "Submit a personal cause with optional image and/or video files for admin approval. Supports both images and videos in a single request.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Cause submission created successfully with media"),
+            @ApiResponse(responseCode = "400", description = "Invalid submission data or media upload failed")
+    })
+    public ResponseEntity<PersonalCauseSubmissionResponse> submitPersonalCauseWithAllMedia(
+            @Parameter(description = "Cause title") @RequestParam("title") String title,
+            @Parameter(description = "Cause description") @RequestParam("description") String description,
+            @Parameter(description = "Short description") @RequestParam(value = "shortDescription", required = false) String shortDescription,
+            @Parameter(description = "Target amount") @RequestParam("targetAmount") String targetAmount,
+            @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
+            @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
+            @Parameter(description = "End date (ISO format)") @RequestParam(value = "endDate", required = false) String endDate,
+            @Parameter(description = "Submitter name") @RequestParam("submitterName") String submitterName,
+            @Parameter(description = "Submitter email") @RequestParam("submitterEmail") String submitterEmail,
+            @Parameter(description = "Submitter phone") @RequestParam(value = "submitterPhone", required = false) String submitterPhone,
+            @Parameter(description = "Submitter message") @RequestParam(value = "submitterMessage", required = false) String submitterMessage,
+            @Parameter(description = "Image file (JPG, PNG, GIF, WEBP, etc.)") @RequestParam(value = "image", required = false) MultipartFile image,
+            @Parameter(description = "Video file (MP4, AVI, MOV, WEBM, etc.)") @RequestParam(value = "video", required = false) MultipartFile video,
+            @Parameter(description = "Proof document file (PDF, JPG, PNG, DOC, etc.)") @RequestParam(value = "proofDocument", required = false) MultipartFile proofDocument) {
+        
+        try {
+            String imageUrl = null;
+            String videoUrl = null;
+            String proofDocumentUrl = null;
+            String proofDocumentName = null;
+            String proofDocumentType = null;
+            
+            // Handle image upload if provided
+            if (image != null && !image.isEmpty()) {
+                imageUrl = imageUploadService.uploadImage(image, "personal-causes");
+            }
+            
+            // Handle video upload if provided
+            if (video != null && !video.isEmpty()) {
+                videoUrl = mediaUploadService.uploadVideo(video, "personal-causes");
+            }
+            
+            // Handle proof document upload if provided
+            if (proofDocument != null && !proofDocument.isEmpty()) {
+                proofDocumentUrl = documentUploadService.uploadDocument(proofDocument, "proof-documents");
+                proofDocumentName = proofDocument.getOriginalFilename();
+                proofDocumentType = documentUploadService.getFileExtension(proofDocumentUrl);
+            }
+            
+            // Create request object
+            PersonalCauseSubmissionRequest request = PersonalCauseSubmissionRequest.builder()
+                    .title(title)
+                    .description(description)
+                    .shortDescription(shortDescription)
+                    .targetAmount(new BigDecimal(targetAmount))
+                    .category(category)
+                    .location(location)
+                    .endDate(endDate != null ? LocalDateTime.parse(endDate) : null)
+                    .submitterName(submitterName)
+                    .submitterEmail(submitterEmail)
+                    .submitterPhone(submitterPhone)
+                    .submitterMessage(submitterMessage)
+                    .build();
+            
+            PersonalCauseSubmissionResponse response = submissionService.createSubmission(
+                    request, imageUrl, videoUrl, proofDocumentUrl, proofDocumentName, proofDocumentType);
+            
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PostMapping(value = "/with-media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
