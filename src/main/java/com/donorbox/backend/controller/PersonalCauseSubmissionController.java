@@ -128,7 +128,7 @@ public class PersonalCauseSubmissionController {
     }
 
     @PostMapping(value = "/with-media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Submit personal cause with media", description = "Submit a personal cause with unified media upload (auto-detects image/video) for admin approval")
+    @Operation(summary = "Submit personal cause with media and documents", description = "Submit a personal cause with unified media upload (auto-detects image/video) and optional proof documents for admin approval")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Cause submission created successfully with media"),
             @ApiResponse(responseCode = "400", description = "Invalid submission data or media upload failed")
@@ -145,11 +145,15 @@ public class PersonalCauseSubmissionController {
             @Parameter(description = "Submitter email") @RequestParam("submitterEmail") String submitterEmail,
             @Parameter(description = "Submitter phone") @RequestParam(value = "submitterPhone", required = false) String submitterPhone,
             @Parameter(description = "Submitter message") @RequestParam(value = "submitterMessage", required = false) String submitterMessage,
-            @Parameter(description = "Media file (image or video - auto-detected)") @RequestParam(value = "media", required = false) MultipartFile media) {
+            @Parameter(description = "Media file (image or video - auto-detected)") @RequestParam(value = "media", required = false) MultipartFile media,
+            @Parameter(description = "Proof document file (PDF, DOC, DOCX, JPG, PNG, etc.)") @RequestParam(value = "proofDocument", required = false) MultipartFile proofDocument) {
         
         try {
             String imageUrl = null;
             String videoUrl = null;
+            String proofDocumentUrl = null;
+            String proofDocumentName = null;
+            String proofDocumentType = null;
             
             // Handle unified media upload if provided
             if (media != null && !media.isEmpty()) {
@@ -161,6 +165,13 @@ public class PersonalCauseSubmissionController {
                 } else if (mediaUploadService.isVideoFile(media.getOriginalFilename())) {
                     videoUrl = mediaPath;
                 }
+            }
+            
+            // Handle proof document upload if provided
+            if (proofDocument != null && !proofDocument.isEmpty()) {
+                proofDocumentUrl = documentUploadService.uploadDocument(proofDocument, "proof-documents");
+                proofDocumentName = proofDocument.getOriginalFilename();
+                proofDocumentType = documentUploadService.getFileExtension(proofDocumentUrl);
             }
             
             // Create request object
@@ -178,7 +189,8 @@ public class PersonalCauseSubmissionController {
                     .submitterMessage(submitterMessage)
                     .build();
             
-            PersonalCauseSubmissionResponse response = submissionService.createSubmission(request, imageUrl, videoUrl);
+            PersonalCauseSubmissionResponse response = submissionService.createSubmission(
+                    request, imageUrl, videoUrl, proofDocumentUrl, proofDocumentName, proofDocumentType);
             
             return new ResponseEntity<>(response, HttpStatus.CREATED);
             

@@ -62,11 +62,12 @@ curl -X POST "http://localhost:8080/api/personal-cause-submissions/submit" \
   -F "proofDocument=@land_certificate.pdf"
 ```
 
-### 2. Submit with Auto-Detecting Media
+### 2. Submit with Auto-Detecting Media + Documents ⭐ ENHANCED
 **POST** `/with-media`
 - **Content-Type**: `multipart/form-data`
-- **Description**: Submit with a single media file that auto-detects if it's image or video
-- **Supports**: Single media file (image OR video)
+- **Description**: Submit with a single media file (auto-detects if image/video) + optional proof documents
+- **Supports**: Single media file (image OR video) + Proof documents
+- **NEW**: Now includes document support!
 
 #### Form Parameters:
 ```
@@ -76,6 +77,7 @@ targetAmount (required): decimal
 submitterName (required): string
 submitterEmail (required): string
 media: file (optional) - Will auto-detect if image or video
+proofDocument: file (optional) - Proof document (PDF, DOC, DOCX, etc.)
 [... other optional fields]
 ```
 
@@ -88,7 +90,8 @@ curl -X POST "http://localhost:8080/api/personal-cause-submissions/with-media" \
   -F "targetAmount=25000" \
   -F "submitterName=Jane Smith" \
   -F "submitterEmail=jane.smith@example.com" \
-  -F "media=@medical_report.jpg"
+  -F "media=@medical_report.jpg" \
+  -F "proofDocument=@medical_certificate.pdf"
 ```
 
 ### 3. Legacy: Submit with Image and Video (Deprecated)
