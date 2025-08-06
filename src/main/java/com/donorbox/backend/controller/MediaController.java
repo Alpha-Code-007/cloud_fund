@@ -68,6 +68,48 @@ public class MediaController {
         return uploadVideo(file, "events");
     }
 
+    @PostMapping("/personal-causes/upload-video")
+    @Operation(summary = "Upload personal cause video", description = "Upload a video file for a personal cause")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Video uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, String>> uploadPersonalCauseVideo(
+            @Parameter(description = "Video file to upload")
+            @RequestParam("video") MultipartFile file) {
+        
+        return uploadVideo(file, "personal-causes");
+    }
+
+    @PostMapping("/public-causes/upload-video")
+    @Operation(summary = "Upload public cause video", description = "Upload a video file for a public cause")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Video uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, String>> uploadPublicCauseVideo(
+            @Parameter(description = "Video file to upload")
+            @RequestParam("video") MultipartFile file) {
+        
+        return uploadVideo(file, "public-causes");
+    }
+
+    @PostMapping("/blogs/upload-video")
+    @Operation(summary = "Upload blog video", description = "Upload a video file for a blog post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Video uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, String>> uploadBlogVideo(
+            @Parameter(description = "Video file to upload")
+            @RequestParam("video") MultipartFile file) {
+        
+        return uploadVideo(file, "blogs");
+    }
+
     // =================== GENERIC MEDIA ENDPOINTS ===================
 
     @PostMapping("/upload-media")
