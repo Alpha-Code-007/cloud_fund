@@ -40,7 +40,7 @@ public class MediaUploadService {
     );
 
     // File size limits
-    private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB for images
+    private static final long MAX_IMAGE_SIZE = 25 * 1024 * 1024; // 25MB for images
     private static final long MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB for videos
 
     /**

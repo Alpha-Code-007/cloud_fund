@@ -30,7 +30,7 @@ public class ImageUploadService {
     private String baseUrl;
 
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "webp");
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final long MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
     /**
      * Upload an image file to local storage
