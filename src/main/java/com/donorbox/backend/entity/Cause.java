@@ -55,6 +55,16 @@ public class Cause {
     @Column(name = "video_url")
     private String videoUrl;
 
+    @ElementCollection
+    @CollectionTable(name = "cause_images", joinColumns = @JoinColumn(name = "cause_id"))
+    @Column(name = "image_url")
+    private List<String> imageUrls;
+
+    @ElementCollection
+    @CollectionTable(name = "cause_videos", joinColumns = @JoinColumn(name = "cause_id"))
+    @Column(name = "video_url")
+    private List<String> videoUrls;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "media_type")
     @Builder.Default

@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -471,6 +473,164 @@ public class MediaController {
         }
     }
 
+    // =================== MULTIPLE FILE UPLOAD ENDPOINTS ===================
+
+    @PostMapping("/causes/upload-multiple-images")
+    @Operation(summary = "Upload multiple images for cause", description = "Upload multiple image files for a cause")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Images uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadCauseMultipleImages(
+            @Parameter(description = "Image files to upload")
+            @RequestParam("images") MultipartFile[] files) {
+        
+        return uploadMultipleImages(files, "causes");
+    }
+
+    @PostMapping("/causes/upload-multiple-videos")
+    @Operation(summary = "Upload multiple videos for cause", description = "Upload multiple video files for a cause")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Videos uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadCauseMultipleVideos(
+            @Parameter(description = "Video files to upload")
+            @RequestParam("videos") MultipartFile[] files) {
+        
+        return uploadMultipleVideos(files, "causes");
+    }
+
+    @PostMapping("/personal-causes/upload-multiple-images")
+    @Operation(summary = "Upload multiple images for personal cause", description = "Upload multiple image files for a personal cause")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Images uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadPersonalCauseMultipleImages(
+            @Parameter(description = "Image files to upload")
+            @RequestParam("images") MultipartFile[] files) {
+        
+        return uploadMultipleImages(files, "personal-causes");
+    }
+
+    @PostMapping("/personal-causes/upload-multiple-videos")
+    @Operation(summary = "Upload multiple videos for personal cause", description = "Upload multiple video files for a personal cause")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Videos uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadPersonalCauseMultipleVideos(
+            @Parameter(description = "Video files to upload")
+            @RequestParam("videos") MultipartFile[] files) {
+        
+        return uploadMultipleVideos(files, "personal-causes");
+    }
+
+    @PostMapping("/public-causes/upload-multiple-images")
+    @Operation(summary = "Upload multiple images for public cause", description = "Upload multiple image files for a public cause")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Images uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadPublicCauseMultipleImages(
+            @Parameter(description = "Image files to upload")
+            @RequestParam("images") MultipartFile[] files) {
+        
+        return uploadMultipleImages(files, "public-causes");
+    }
+
+    @PostMapping("/public-causes/upload-multiple-videos")
+    @Operation(summary = "Upload multiple videos for public cause", description = "Upload multiple video files for a public cause")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Videos uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadPublicCauseMultipleVideos(
+            @Parameter(description = "Video files to upload")
+            @RequestParam("videos") MultipartFile[] files) {
+        
+        return uploadMultipleVideos(files, "public-causes");
+    }
+
+    @PostMapping("/events/upload-multiple-images")
+    @Operation(summary = "Upload multiple images for event", description = "Upload multiple image files for an event")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Images uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadEventMultipleImages(
+            @Parameter(description = "Image files to upload")
+            @RequestParam("images") MultipartFile[] files) {
+        
+        return uploadMultipleImages(files, "events");
+    }
+
+    @PostMapping("/events/upload-multiple-videos")
+    @Operation(summary = "Upload multiple videos for event", description = "Upload multiple video files for an event")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Videos uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadEventMultipleVideos(
+            @Parameter(description = "Video files to upload")
+            @RequestParam("videos") MultipartFile[] files) {
+        
+        return uploadMultipleVideos(files, "events");
+    }
+
+    @PostMapping("/blogs/upload-multiple-images")
+    @Operation(summary = "Upload multiple images for blog", description = "Upload multiple image files for a blog post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Images uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadBlogMultipleImages(
+            @Parameter(description = "Image files to upload")
+            @RequestParam("images") MultipartFile[] files) {
+        
+        return uploadMultipleImages(files, "blogs");
+    }
+
+    @PostMapping("/blogs/upload-multiple-videos")
+    @Operation(summary = "Upload multiple videos for blog", description = "Upload multiple video files for a blog post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Videos uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadBlogMultipleVideos(
+            @Parameter(description = "Video files to upload")
+            @RequestParam("videos") MultipartFile[] files) {
+        
+        return uploadMultipleVideos(files, "blogs");
+    }
+
+    @PostMapping("/upload-multiple-media")
+    @Operation(summary = "Upload multiple media files", description = "Upload multiple media files (images and/or videos) with specified category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Media files uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid files or upload failed"),
+            @ApiResponse(responseCode = "413", description = "File size too large")
+    })
+    public ResponseEntity<Map<String, Object>> uploadMultipleGenericMedia(
+            @Parameter(description = "Media files to upload (images and/or videos)")
+            @RequestParam("files") MultipartFile[] files,
+            @Parameter(description = "Category for organizing media")
+            @RequestParam(value = "category", defaultValue = "general") String category) {
+        
+        return uploadMultipleMedia(files, category);
+    }
+
     // =================== PRIVATE HELPER METHODS ===================
 
     private ResponseEntity<Resource> serveMediaFile(String category, String filename) {
@@ -696,6 +856,151 @@ public class MediaController {
             response.put("error", "Media not found or could not be deleted");
             response.put("mediaPath", mediaPath);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
+    private ResponseEntity<Map<String, Object>> uploadMultipleImages(MultipartFile[] files, String category) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (files == null || files.length == 0) {
+                response.put("error", "No image files provided");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            List<String> uploadedPaths = mediaUploadService.uploadMultipleImages(files, category);
+            List<String> fullUrls = new ArrayList<>();
+            List<Map<String, String>> fileDetails = new ArrayList<>();
+            
+            for (int i = 0; i < uploadedPaths.size(); i++) {
+                String path = uploadedPaths.get(i);
+                String url = mediaUploadService.getMediaUrl(path);
+                fullUrls.add(url);
+                
+                Map<String, String> fileDetail = new HashMap<>();
+                fileDetail.put("originalFilename", files[i].getOriginalFilename());
+                fileDetail.put("uploadedPath", path);
+                fileDetail.put("url", url);
+                fileDetail.put("size", String.valueOf(files[i].getSize()));
+                fileDetails.add(fileDetail);
+            }
+            
+            response.put("message", "Images uploaded successfully");
+            response.put("category", category);
+            response.put("mediaType", "IMAGE");
+            response.put("uploadedCount", uploadedPaths.size());
+            response.put("mediaPaths", uploadedPaths);
+            response.put("mediaUrls", fullUrls);
+            response.put("fileDetails", fileDetails);
+            
+            log.info("Multiple images uploaded successfully: {} files to category {}", uploadedPaths.size(), category);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IOException e) {
+            log.error("Error uploading multiple images: {}", e.getMessage(), e);
+            response.put("error", "Failed to upload images: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    private ResponseEntity<Map<String, Object>> uploadMultipleVideos(MultipartFile[] files, String category) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (files == null || files.length == 0) {
+                response.put("error", "No video files provided");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            List<String> uploadedPaths = mediaUploadService.uploadMultipleVideos(files, category);
+            List<String> fullUrls = new ArrayList<>();
+            List<Map<String, String>> fileDetails = new ArrayList<>();
+            
+            for (int i = 0; i < uploadedPaths.size(); i++) {
+                String path = uploadedPaths.get(i);
+                String url = mediaUploadService.getMediaUrl(path);
+                fullUrls.add(url);
+                
+                Map<String, String> fileDetail = new HashMap<>();
+                fileDetail.put("originalFilename", files[i].getOriginalFilename());
+                fileDetail.put("uploadedPath", path);
+                fileDetail.put("url", url);
+                fileDetail.put("size", String.valueOf(files[i].getSize()));
+                fileDetails.add(fileDetail);
+            }
+            
+            response.put("message", "Videos uploaded successfully");
+            response.put("category", category);
+            response.put("mediaType", "VIDEO");
+            response.put("uploadedCount", uploadedPaths.size());
+            response.put("mediaPaths", uploadedPaths);
+            response.put("mediaUrls", fullUrls);
+            response.put("fileDetails", fileDetails);
+            
+            log.info("Multiple videos uploaded successfully: {} files to category {}", uploadedPaths.size(), category);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IOException e) {
+            log.error("Error uploading multiple videos: {}", e.getMessage(), e);
+            response.put("error", "Failed to upload videos: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    private ResponseEntity<Map<String, Object>> uploadMultipleMedia(MultipartFile[] files, String category) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (files == null || files.length == 0) {
+                response.put("error", "No media files provided");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            List<String> uploadedPaths = mediaUploadService.uploadMultipleMedia(files, category);
+            List<String> fullUrls = new ArrayList<>();
+            List<Map<String, String>> fileDetails = new ArrayList<>();
+            
+            for (int i = 0; i < uploadedPaths.size(); i++) {
+                String path = uploadedPaths.get(i);
+                String url = mediaUploadService.getMediaUrl(path);
+                fullUrls.add(url);
+                
+                Map<String, String> fileDetail = new HashMap<>();
+                fileDetail.put("originalFilename", files[i].getOriginalFilename());
+                fileDetail.put("uploadedPath", path);
+                fileDetail.put("url", url);
+                fileDetail.put("size", String.valueOf(files[i].getSize()));
+                
+                // Determine media type
+                String mediaType = "UNKNOWN";
+                if (mediaUploadService.isImageFile(files[i].getOriginalFilename())) {
+                    mediaType = "IMAGE";
+                } else if (mediaUploadService.isVideoFile(files[i].getOriginalFilename())) {
+                    mediaType = "VIDEO";
+                }
+                fileDetail.put("mediaType", mediaType);
+                
+                fileDetails.add(fileDetail);
+            }
+            
+            response.put("message", "Media files uploaded successfully");
+            response.put("category", category);
+            response.put("mediaType", "MIXED");
+            response.put("uploadedCount", uploadedPaths.size());
+            response.put("mediaPaths", uploadedPaths);
+            response.put("mediaUrls", fullUrls);
+            response.put("fileDetails", fileDetails);
+            
+            log.info("Multiple media files uploaded successfully: {} files to category {}", uploadedPaths.size(), category);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IOException e) {
+            log.error("Error uploading multiple media files: {}", e.getMessage(), e);
+            response.put("error", "Failed to upload media files: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 }

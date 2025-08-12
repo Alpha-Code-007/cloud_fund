@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -349,6 +350,112 @@ public class MediaUploadService {
             return "";
         }
         return filename.substring(lastDotIndex + 1);
+    }
+
+    /**
+     * Upload multiple media files (images and/or videos)
+     * @param files Array of multipart files to upload
+     * @param category The category for organizing media
+     * @return List of relative paths to access the uploaded media files
+     * @throws IOException if any file upload fails
+     */
+    public List<String> uploadMultipleMedia(MultipartFile[] files, String category) throws IOException {
+        if (files == null || files.length == 0) {
+            throw new IOException("No files provided for upload");
+        }
+
+        List<String> uploadedPaths = new ArrayList<>();
+        
+        for (MultipartFile file : files) {
+            if (file != null && !file.isEmpty()) {
+                String relativePath = uploadMedia(file, category);
+                uploadedPaths.add(relativePath);
+            }
+        }
+        
+        if (uploadedPaths.isEmpty()) {
+            throw new IOException("No valid files were uploaded");
+        }
+        
+        return uploadedPaths;
+    }
+
+    /**
+     * Upload multiple image files specifically
+     * @param files Array of image files to upload
+     * @param category The category for organizing images
+     * @return List of relative paths to access the uploaded images
+     * @throws IOException if any file upload fails
+     */
+    public List<String> uploadMultipleImages(MultipartFile[] files, String category) throws IOException {
+        if (files == null || files.length == 0) {
+            throw new IOException("No image files provided for upload");
+        }
+
+        List<String> uploadedPaths = new ArrayList<>();
+        
+        for (MultipartFile file : files) {
+            if (file != null && !file.isEmpty()) {
+                validateImageFile(file);
+                String relativePath = uploadMedia(file, category);
+                uploadedPaths.add(relativePath);
+            }
+        }
+        
+        if (uploadedPaths.isEmpty()) {
+            throw new IOException("No valid image files were uploaded");
+        }
+        
+        return uploadedPaths;
+    }
+
+    /**
+     * Upload multiple video files specifically
+     * @param files Array of video files to upload
+     * @param category The category for organizing videos
+     * @return List of relative paths to access the uploaded videos
+     * @throws IOException if any file upload fails
+     */
+    public List<String> uploadMultipleVideos(MultipartFile[] files, String category) throws IOException {
+        if (files == null || files.length == 0) {
+            throw new IOException("No video files provided for upload");
+        }
+
+        List<String> uploadedPaths = new ArrayList<>();
+        
+        for (MultipartFile file : files) {
+            if (file != null && !file.isEmpty()) {
+                validateVideoFile(file);
+                String relativePath = uploadMedia(file, category);
+                uploadedPaths.add(relativePath);
+            }
+        }
+        
+        if (uploadedPaths.isEmpty()) {
+            throw new IOException("No valid video files were uploaded");
+        }
+        
+        return uploadedPaths;
+    }
+
+    /**
+     * Delete multiple media files from local storage
+     * @param mediaPaths List of relative paths of media files to delete
+     * @return Number of files successfully deleted
+     */
+    public int deleteMultipleMedia(List<String> mediaPaths) {
+        if (mediaPaths == null || mediaPaths.isEmpty()) {
+            return 0;
+        }
+        
+        int deletedCount = 0;
+        for (String mediaPath : mediaPaths) {
+            if (deleteMedia(mediaPath)) {
+                deletedCount++;
+            }
+        }
+        
+        return deletedCount;
     }
 
     public enum FileMediaType {
