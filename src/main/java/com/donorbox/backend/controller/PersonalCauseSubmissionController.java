@@ -70,8 +70,8 @@ public class PersonalCauseSubmissionController {
             @Parameter(description = "Submitter email") @RequestParam("submitterEmail") String submitterEmail,
             @Parameter(description = "Submitter phone") @RequestParam(value = "submitterPhone", required = false) String submitterPhone,
             @Parameter(description = "Submitter message") @RequestParam(value = "submitterMessage", required = false) String submitterMessage,
-            @Parameter(description = "Media file (image or video - auto-detected). Accepts: JPG, PNG, GIF, WEBP, MP4, AVI, MOV, WEBM, etc.") @RequestParam(value = "media", required = false) MultipartFile media,
-            @Parameter(description = "Proof document file (PDF, DOC, DOCX, JPG, PNG, etc.)") @RequestParam(value = "proofDocument", required = false) MultipartFile proofDocument) {
+            @Parameter(description = "Media files (images or videos - auto-detected). Accepts multiple files: JPG, PNG, GIF, WEBP, MP4, AVI, MOV, WEBM, etc.") @RequestParam(value = "media", required = false) MultipartFile[] media,
+            @Parameter(description = "Proof document files (PDF, DOC, DOCX, JPG, PNG, etc.). Accepts multiple files.") @RequestParam(value = "proofDocument", required = false) MultipartFile[] proofDocument) {
         
         try {
             String imageUrl = null;
@@ -81,21 +81,26 @@ public class PersonalCauseSubmissionController {
             String proofDocumentType = null;
             
             // Handle unified media upload if provided (auto-detects image or video)
-            if (media != null && !media.isEmpty()) {
-                String mediaPath = mediaUploadService.uploadMedia(media, "personal-causes");
+            if (media != null && media.length > 0) {
+                List<String> uploadedPaths = mediaUploadService.uploadMultipleMedia(media, "personal-causes");
                 
-                // Determine if uploaded file is image or video
-                if (mediaUploadService.isImageFile(media.getOriginalFilename())) {
-                    imageUrl = mediaPath;
-                } else if (mediaUploadService.isVideoFile(media.getOriginalFilename())) {
-                    videoUrl = mediaPath;
+                // Process first media file for compatibility (you can extend this logic)
+                if (!uploadedPaths.isEmpty()) {
+                    String firstMediaPath = uploadedPaths.get(0);
+                    String firstFileName = media[0].getOriginalFilename();
+                    
+                    if (mediaUploadService.isImageFile(firstFileName)) {
+                        imageUrl = firstMediaPath;
+                    } else if (mediaUploadService.isVideoFile(firstFileName)) {
+                        videoUrl = firstMediaPath;
+                    }
                 }
             }
             
-            // Handle proof document upload if provided
-            if (proofDocument != null && !proofDocument.isEmpty()) {
-                proofDocumentUrl = documentUploadService.uploadDocument(proofDocument, "proof-documents");
-                proofDocumentName = proofDocument.getOriginalFilename();
+            // Handle proof document upload if provided (first document for compatibility)
+            if (proofDocument != null && proofDocument.length > 0 && !proofDocument[0].isEmpty()) {
+                proofDocumentUrl = documentUploadService.uploadDocument(proofDocument[0], "proof-documents");
+                proofDocumentName = proofDocument[0].getOriginalFilename();
                 proofDocumentType = documentUploadService.getFileExtension(proofDocumentUrl);
             }
             
@@ -146,8 +151,8 @@ public class PersonalCauseSubmissionController {
             @Parameter(description = "Submitter email") @RequestParam("submitterEmail") String submitterEmail,
             @Parameter(description = "Submitter phone") @RequestParam(value = "submitterPhone", required = false) String submitterPhone,
             @Parameter(description = "Submitter message") @RequestParam(value = "submitterMessage", required = false) String submitterMessage,
-            @Parameter(description = "Media file (image or video - auto-detected)") @RequestParam(value = "media", required = false) MultipartFile media,
-            @Parameter(description = "Proof document file (PDF, DOC, DOCX, JPG, PNG, etc.)") @RequestParam(value = "proofDocument", required = false) MultipartFile proofDocument) {
+            @Parameter(description = "Media files (images or videos - auto-detected). Accepts multiple files.") @RequestParam(value = "media", required = false) MultipartFile[] media,
+            @Parameter(description = "Proof document files (PDF, DOC, DOCX, JPG, PNG, etc.). Accepts multiple files.") @RequestParam(value = "proofDocument", required = false) MultipartFile[] proofDocument) {
         
         try {
             String imageUrl = null;
@@ -157,21 +162,26 @@ public class PersonalCauseSubmissionController {
             String proofDocumentType = null;
             
             // Handle unified media upload if provided
-            if (media != null && !media.isEmpty()) {
-                String mediaPath = mediaUploadService.uploadMedia(media, "personal-causes");
+            if (media != null && media.length > 0) {
+                List<String> uploadedPaths = mediaUploadService.uploadMultipleMedia(media, "personal-causes");
                 
-                // Determine if uploaded file is image or video
-                if (mediaUploadService.isImageFile(media.getOriginalFilename())) {
-                    imageUrl = mediaPath;
-                } else if (mediaUploadService.isVideoFile(media.getOriginalFilename())) {
-                    videoUrl = mediaPath;
+                // Process first media file for compatibility (you can extend this logic)
+                if (!uploadedPaths.isEmpty()) {
+                    String firstMediaPath = uploadedPaths.get(0);
+                    String firstFileName = media[0].getOriginalFilename();
+                    
+                    if (mediaUploadService.isImageFile(firstFileName)) {
+                        imageUrl = firstMediaPath;
+                    } else if (mediaUploadService.isVideoFile(firstFileName)) {
+                        videoUrl = firstMediaPath;
+                    }
                 }
             }
             
-            // Handle proof document upload if provided
-            if (proofDocument != null && !proofDocument.isEmpty()) {
-                proofDocumentUrl = documentUploadService.uploadDocument(proofDocument, "proof-documents");
-                proofDocumentName = proofDocument.getOriginalFilename();
+            // Handle proof document upload if provided (first document for compatibility)
+            if (proofDocument != null && proofDocument.length > 0 && !proofDocument[0].isEmpty()) {
+                proofDocumentUrl = documentUploadService.uploadDocument(proofDocument[0], "proof-documents");
+                proofDocumentName = proofDocument[0].getOriginalFilename();
                 proofDocumentType = documentUploadService.getFileExtension(proofDocumentUrl);
             }
             
@@ -286,23 +296,23 @@ public class PersonalCauseSubmissionController {
             @Parameter(description = "Submitter email") @RequestParam("submitterEmail") String submitterEmail,
             @Parameter(description = "Submitter phone") @RequestParam(value = "submitterPhone", required = false) String submitterPhone,
             @Parameter(description = "Submitter message") @RequestParam(value = "submitterMessage", required = false) String submitterMessage,
-            @Parameter(description = "Cause image file (JPG, PNG, etc.)") @RequestParam(value = "image", required = false) MultipartFile image,
-            @Parameter(description = "Proof document file (PDF, JPG, PNG, DOC, etc.)") @RequestParam(value = "proofDocument", required = false) MultipartFile proofDocument) {
+            @Parameter(description = "Cause image files (JPG, PNG, etc.). Accepts multiple files.") @RequestParam(value = "image", required = false) MultipartFile[] image,
+            @Parameter(description = "Proof document files (PDF, JPG, PNG, DOC, etc.). Accepts multiple files.") @RequestParam(value = "proofDocument", required = false) MultipartFile[] proofDocument) {
         
         try {
-            // Handle image upload if provided
+            // Handle image upload if provided (first image for compatibility)
             String imageUrl = null;
-            if (image != null && !image.isEmpty()) {
-                imageUrl = imageUploadService.uploadImage(image, "personal-causes");
+            if (image != null && image.length > 0 && !image[0].isEmpty()) {
+                imageUrl = imageUploadService.uploadImage(image[0], "personal-causes");
             }
             
-            // Handle proof document upload if provided
+            // Handle proof document upload if provided (first document for compatibility)
             String proofDocumentUrl = null;
             String proofDocumentName = null;
             String proofDocumentType = null;
-            if (proofDocument != null && !proofDocument.isEmpty()) {
-                proofDocumentUrl = documentUploadService.uploadDocument(proofDocument, "proof-documents");
-                proofDocumentName = proofDocument.getOriginalFilename();
+            if (proofDocument != null && proofDocument.length > 0 && !proofDocument[0].isEmpty()) {
+                proofDocumentUrl = documentUploadService.uploadDocument(proofDocument[0], "proof-documents");
+                proofDocumentName = proofDocument[0].getOriginalFilename();
                 proofDocumentType = documentUploadService.getFileExtension(proofDocumentUrl);
             }
             

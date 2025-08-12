@@ -195,7 +195,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Target amount") @RequestParam("targetAmount") String targetAmount,
             @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
-            @Parameter(description = "Video file") @RequestParam(value = "video", required = false) MultipartFile video) {
+            @Parameter(description = "Video files. Accepts multiple files.") @RequestParam(value = "video", required = false) MultipartFile[] video) {
 
         try {
             // Create cause object
@@ -209,10 +209,15 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
                     .build();
 
             // Handle video upload if provided
-            if (video != null && !video.isEmpty()) {
-                String videoPath = mediaUploadService.uploadVideo(video, "causes");
-                cause.setVideoUrl(videoPath); // Store relative path, not full URL
-                cause.setMediaType(Cause.MediaType.VIDEO);
+            if (video != null && video.length > 0) {
+                // Upload multiple videos
+                List<String> videoPaths = mediaUploadService.uploadMultipleVideos(video, "causes");
+                // For backward compatibility, set the first video as the main video URL
+                if (!videoPaths.isEmpty()) {
+                    cause.setVideoUrl(videoPaths.get(0)); // Store first video as primary
+                    cause.setMediaType(Cause.MediaType.VIDEO);
+                    // TODO: Store additional videos in videoUrls list when entity supports it
+                }
             }
 
             Cause createdCause = causeService.createCause(cause);
@@ -241,7 +246,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Target amount") @RequestParam(value = "targetAmount", required = false) String targetAmount,
             @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
-            @Parameter(description = "Video file") @RequestParam(value = "video", required = false) MultipartFile video) {
+            @Parameter(description = "Video files. Accepts multiple files.") @RequestParam(value = "video", required = false) MultipartFile[] video) {
 
         try {
             // Get existing cause
@@ -256,15 +261,20 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             if (location != null) existingCause.setLocation(location);
 
             // Handle video upload if provided
-            if (video != null && !video.isEmpty()) {
+            if (video != null && video.length > 0) {
                 // Delete old video if exists
                 if (existingCause.getVideoUrl() != null) {
                     mediaUploadService.deleteMedia(existingCause.getVideoUrl());
                 }
 
-                String videoPath = mediaUploadService.uploadVideo(video, "causes");
-                existingCause.setVideoUrl(videoPath);
-                existingCause.setMediaType(Cause.MediaType.VIDEO);
+                // Upload multiple videos
+                List<String> videoPaths = mediaUploadService.uploadMultipleVideos(video, "causes");
+                // For backward compatibility, set the first video as the main video URL
+                if (!videoPaths.isEmpty()) {
+                    existingCause.setVideoUrl(videoPaths.get(0)); // Store first video as primary
+                    existingCause.setMediaType(Cause.MediaType.VIDEO);
+                    // TODO: Store additional videos in videoUrls list when entity supports it
+                }
             }
 
             Cause updatedCause = causeService.updateCause(id, existingCause);
@@ -354,7 +364,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Target amount") @RequestParam("targetAmount") String targetAmount,
             @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
-            @Parameter(description = "Image file") @RequestParam(value = "image", required = false) MultipartFile image) {
+            @Parameter(description = "Image files. Accepts multiple files.") @RequestParam(value = "image", required = false) MultipartFile[] image) {
         
         try {
             // Create cause object
@@ -368,9 +378,14 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
                     .build();
             
             // Handle image upload if provided
-            if (image != null && !image.isEmpty()) {
-                String imagePath = imageUploadService.uploadImage(image, "causes");
-                cause.setImageUrl(imagePath); // Store relative path, not full URL
+            if (image != null && image.length > 0) {
+                // Upload multiple images
+                List<String> imagePaths = mediaUploadService.uploadMultipleImages(image, "causes");
+                // For backward compatibility, set the first image as the main image URL
+                if (!imagePaths.isEmpty()) {
+                    cause.setImageUrl(imagePaths.get(0)); // Store first image as primary
+                    // TODO: Store additional images in imageUrls list when entity supports it
+                }
             }
             
             Cause createdCause = causeService.createCause(cause);
@@ -399,7 +414,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Target amount") @RequestParam(value = "targetAmount", required = false) String targetAmount,
             @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
-            @Parameter(description = "Image file") @RequestParam(value = "image", required = false) MultipartFile image) {
+            @Parameter(description = "Image files. Accepts multiple files.") @RequestParam(value = "image", required = false) MultipartFile[] image) {
         
         try {
             // Get existing cause
@@ -414,14 +429,19 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             if (location != null) existingCause.setLocation(location);
             
             // Handle image upload if provided
-            if (image != null && !image.isEmpty()) {
+            if (image != null && image.length > 0) {
                 // Delete old image if exists
                 if (existingCause.getImageUrl() != null) {
                     imageUploadService.deleteImage(existingCause.getImageUrl());
                 }
                 
-                String imagePath = imageUploadService.uploadImage(image, "causes");
-                existingCause.setImageUrl(imagePath);
+                // Upload multiple images
+                List<String> imagePaths = mediaUploadService.uploadMultipleImages(image, "causes");
+                // For backward compatibility, set the first image as the main image URL
+                if (!imagePaths.isEmpty()) {
+                    existingCause.setImageUrl(imagePaths.get(0)); // Store first image as primary
+                    // TODO: Store additional images in imageUrls list when entity supports it
+                }
             }
             
             Cause updatedCause = causeService.updateCause(id, existingCause);
