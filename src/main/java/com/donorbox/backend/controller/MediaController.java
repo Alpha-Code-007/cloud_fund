@@ -49,11 +49,11 @@ public class MediaController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadCauseVideo(
-            @Parameter(description = "Video file to upload")
-            @RequestParam("video") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadCauseVideo(
+            @Parameter(description = "Video files to upload (supports multiple files)")
+            @RequestParam("video") MultipartFile[] files) {
         
-        return uploadVideo(file, "causes");
+        return uploadMultipleVideos(files, "causes");
     }
 
     @PostMapping("/events/upload-video")
@@ -63,11 +63,11 @@ public class MediaController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadEventVideo(
-            @Parameter(description = "Video file to upload")
-            @RequestParam("video") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadEventVideo(
+            @Parameter(description = "Video files to upload (supports multiple files)")
+            @RequestParam("video") MultipartFile[] files) {
         
-        return uploadVideo(file, "events");
+        return uploadMultipleVideos(files, "events");
     }
 
     @PostMapping("/personal-causes/upload-video")
@@ -77,11 +77,11 @@ public class MediaController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadPersonalCauseVideo(
-            @Parameter(description = "Video file to upload")
-            @RequestParam("video") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadPersonalCauseVideo(
+            @Parameter(description = "Video files to upload (supports multiple files)")
+            @RequestParam("video") MultipartFile[] files) {
         
-        return uploadVideo(file, "personal-causes");
+        return uploadMultipleVideos(files, "personal-causes");
     }
 
     @PostMapping("/public-causes/upload-video")
@@ -91,11 +91,11 @@ public class MediaController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadPublicCauseVideo(
-            @Parameter(description = "Video file to upload")
-            @RequestParam("video") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadPublicCauseVideo(
+            @Parameter(description = "Video files to upload (supports multiple files)")
+            @RequestParam("video") MultipartFile[] files) {
         
-        return uploadVideo(file, "public-causes");
+        return uploadMultipleVideos(files, "public-causes");
     }
 
     @PostMapping("/blogs/upload-video")
@@ -105,11 +105,11 @@ public class MediaController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadBlogVideo(
-            @Parameter(description = "Video file to upload")
-            @RequestParam("video") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadBlogVideo(
+            @Parameter(description = "Video files to upload (supports multiple files)")
+            @RequestParam("video") MultipartFile[] files) {
         
-        return uploadVideo(file, "blogs");
+        return uploadMultipleVideos(files, "blogs");
     }
 
     // =================== GENERIC MEDIA ENDPOINTS ===================
@@ -121,13 +121,13 @@ public class MediaController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadGenericMedia(
-            @Parameter(description = "Media file to upload")
-            @RequestParam("file") MultipartFile file,
+    public ResponseEntity<Map<String, Object>> uploadGenericMedia(
+            @Parameter(description = "Media files to upload (supports multiple files)")
+            @RequestParam("file") MultipartFile[] files,
             @Parameter(description = "Category for organizing media")
             @RequestParam(value = "category", defaultValue = "general") String category) {
         
-        return uploadMedia(file, category);
+        return uploadMultipleMedia(files, category);
     }
 
     // =================== UNIFIED CAUSE MEDIA ENDPOINTS ===================
@@ -139,11 +139,11 @@ public class MediaController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadPersonalCauseMedia(
-            @Parameter(description = "Media file to upload (image or video)")
-            @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadPersonalCauseMedia(
+            @Parameter(description = "Media files to upload (images or videos - supports multiple files)")
+            @RequestParam("file") MultipartFile[] files) {
         
-        return uploadMedia(file, "personal-causes");
+        return uploadMultipleMedia(files, "personal-causes");
     }
 
     @PostMapping("/public-causes/upload-media")
@@ -153,11 +153,11 @@ public class MediaController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadPublicCauseMedia(
-            @Parameter(description = "Media file to upload (image or video)")
-            @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadPublicCauseMedia(
+            @Parameter(description = "Media files to upload (images or videos - supports multiple files)")
+            @RequestParam("file") MultipartFile[] files) {
         
-        return uploadMedia(file, "public-causes");
+        return uploadMultipleMedia(files, "public-causes");
     }
 
     @PostMapping("/causes/upload-media")
@@ -167,11 +167,11 @@ public class MediaController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadCauseMedia(
-            @Parameter(description = "Media file to upload (image or video)")
-            @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadCauseMedia(
+            @Parameter(description = "Media files to upload (images or videos - supports multiple files)")
+            @RequestParam("file") MultipartFile[] files) {
         
-        return uploadMedia(file, "causes");
+        return uploadMultipleMedia(files, "causes");
     }
 
     // =================== MEDIA SERVING ENDPOINTS ===================

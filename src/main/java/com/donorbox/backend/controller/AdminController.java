@@ -525,7 +525,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Event date (ISO format)") @RequestParam(value = "eventDate", required = false) String eventDate,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
             @Parameter(description = "Max participants") @RequestParam(value = "maxParticipants", required = false) String maxParticipants,
-            @Parameter(description = "Image file") @RequestParam(value = "image", required = false) MultipartFile image) {
+            @Parameter(description = "Image files (supports multiple files)") @RequestParam(value = "image", required = false) MultipartFile[] image) {
         
         try {
             // Get existing event
@@ -539,14 +539,14 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             if (location != null) existingEvent.setLocation(location);
             if (maxParticipants != null) existingEvent.setMaxParticipants(Integer.parseInt(maxParticipants));
             
-            // Handle image upload if provided
-            if (image != null && !image.isEmpty()) {
+            // Handle image upload if provided (use first image for backward compatibility)
+            if (image != null && image.length > 0 && !image[0].isEmpty()) {
                 // Delete old image if exists
                 if (existingEvent.getImageUrl() != null) {
                     imageUploadService.deleteImage(existingEvent.getImageUrl());
                 }
                 
-                String imagePath = imageUploadService.uploadImage(image, "events");
+                String imagePath = imageUploadService.uploadImage(image[0], "events");
                 existingEvent.setImageUrl(imagePath);
             }
             
@@ -690,9 +690,9 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
     })
     public ResponseEntity<BlogResponse> updateBlogImage(
             @Parameter(description = "Blog ID") @PathVariable Long id,
-            @Parameter(description = "Featured image file") @RequestParam("image") MultipartFile image) {
+            @Parameter(description = "Featured image files (supports multiple files)") @RequestParam("image") MultipartFile[] image) {
         try {
-            BlogResponse response = blogService.updateBlogWithImage(id, image);
+            BlogResponse response = blogService.updateBlogWithImage(id, image.length > 0 ? image[0] : null);
             return ResponseEntity.ok(response);
         } catch (IOException e) {
             return ResponseEntity.badRequest().build();
@@ -710,9 +710,9 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
     })
     public ResponseEntity<BlogResponse> updateBlogWithImage(
             @Parameter(description = "Blog ID") @PathVariable Long id,
-            @Parameter(description = "Featured image file") @RequestParam(value = "image", required = true) MultipartFile image) {
+            @Parameter(description = "Featured image files (supports multiple files)") @RequestParam(value = "image", required = true) MultipartFile[] image) {
         try {
-            BlogResponse response = blogService.updateBlogWithImage(id, image);
+            BlogResponse response = blogService.updateBlogWithImage(id, image.length > 0 ? image[0] : null);
             return ResponseEntity.ok(response);
         } catch (IOException e) {
             return ResponseEntity.badRequest().build();
@@ -838,7 +838,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Meta description") @RequestParam(value = "metaDescription", required = false) String metaDescription,
             @Parameter(description = "Is featured") @RequestParam(value = "isFeatured", defaultValue = "false") Boolean isFeatured,
             @Parameter(description = "Allow comments") @RequestParam(value = "allowComments", defaultValue = "true") Boolean allowComments,
-            @Parameter(description = "Featured image file") @RequestParam(value = "image", required = false) MultipartFile image) {
+            @Parameter(description = "Featured image files (supports multiple files)") @RequestParam(value = "image", required = false) MultipartFile[] image) {
         
         if (title == null || title.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Title is required.");
@@ -851,10 +851,10 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
         }
 
         try {
-            // Handle image upload if provided
+            // Handle image upload if provided (use first image for backward compatibility)
             String featuredImage = null;
-            if (image != null && !image.isEmpty()) {
-                featuredImage = imageUploadService.uploadImage(image, "blogs");
+            if (image != null && image.length > 0 && !image[0].isEmpty()) {
+                featuredImage = imageUploadService.uploadImage(image[0], "blogs");
             }
             
             // Create blog request

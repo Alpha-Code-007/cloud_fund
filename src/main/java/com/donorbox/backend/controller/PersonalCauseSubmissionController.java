@@ -233,20 +233,20 @@ public class PersonalCauseSubmissionController {
             @Parameter(description = "Submitter email") @RequestParam("submitterEmail") String submitterEmail,
             @Parameter(description = "Submitter phone") @RequestParam(value = "submitterPhone", required = false) String submitterPhone,
             @Parameter(description = "Submitter message") @RequestParam(value = "submitterMessage", required = false) String submitterMessage,
-            @Parameter(description = "Image file") @RequestParam(value = "image", required = false) MultipartFile image,
-            @Parameter(description = "Video file") @RequestParam(value = "video", required = false) MultipartFile video) {
+            @Parameter(description = "Image files (supports multiple files)") @RequestParam(value = "image", required = false) MultipartFile[] image,
+            @Parameter(description = "Video files (supports multiple files)") @RequestParam(value = "video", required = false) MultipartFile[] video) {
         
         try {
-            // Handle image upload if provided
+            // Handle image upload if provided (use first image for backward compatibility)
             String imageUrl = null;
-            if (image != null && !image.isEmpty()) {
-                imageUrl = imageUploadService.uploadImage(image, "personal-causes");
+            if (image != null && image.length > 0 && !image[0].isEmpty()) {
+                imageUrl = imageUploadService.uploadImage(image[0], "personal-causes");
             }
             
-            // Handle video upload if provided
+            // Handle video upload if provided (use first video for backward compatibility)
             String videoUrl = null;
-            if (video != null && !video.isEmpty()) {
-                videoUrl = mediaUploadService.uploadVideo(video, "personal-causes");
+            if (video != null && video.length > 0 && !video[0].isEmpty()) {
+                videoUrl = mediaUploadService.uploadVideo(video[0], "personal-causes");
             }
             
             // Create request object

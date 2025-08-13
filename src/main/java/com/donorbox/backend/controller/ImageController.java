@@ -24,6 +24,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api")
@@ -45,11 +47,11 @@ public class ImageController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadCauseImage(
-            @Parameter(description = "Image file to upload")
-            @RequestParam("image") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadCauseImage(
+            @Parameter(description = "Image files to upload (supports multiple files)")
+            @RequestParam("image") MultipartFile[] files) {
         
-        return uploadImage(file, "causes");
+        return uploadMultipleImages(files, "causes");
     }
 
      // Upload an image for events
@@ -61,11 +63,11 @@ public class ImageController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadEventImage(
-            @Parameter(description = "Image file to upload")
-            @RequestParam("image") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadEventImage(
+            @Parameter(description = "Image files to upload (supports multiple files)")
+            @RequestParam("image") MultipartFile[] files) {
         
-        return uploadImage(file, "events");
+        return uploadMultipleImages(files, "events");
     }
 
      // Upload an image for blogs
@@ -76,11 +78,11 @@ public class ImageController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadBlogImage(
-            @Parameter(description = "Image file to upload")
-            @RequestParam("image") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadBlogImage(
+            @Parameter(description = "Image files to upload (supports multiple files)")
+            @RequestParam("image") MultipartFile[] files) {
         
-        return uploadImage(file, "blogs");
+        return uploadMultipleImages(files, "blogs");
     }
 
      // Upload an image for personal causes
@@ -91,11 +93,11 @@ public class ImageController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadPersonalCauseImage(
-            @Parameter(description = "Image file to upload")
-            @RequestParam("image") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadPersonalCauseImage(
+            @Parameter(description = "Image files to upload (supports multiple files)")
+            @RequestParam("image") MultipartFile[] files) {
         
-        return uploadImage(file, "personal-causes");
+        return uploadMultipleImages(files, "personal-causes");
     }
 
      // Upload an image for public causes
@@ -106,11 +108,11 @@ public class ImageController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadPublicCauseImage(
-            @Parameter(description = "Image file to upload")
-            @RequestParam("image") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadPublicCauseImage(
+            @Parameter(description = "Image files to upload (supports multiple files)")
+            @RequestParam("image") MultipartFile[] files) {
         
-        return uploadImage(file, "public-causes");
+        return uploadMultipleImages(files, "public-causes");
     }
 
      // Generic image upload method
@@ -121,13 +123,13 @@ public class ImageController {
             @ApiResponse(responseCode = "400", description = "Invalid file or upload failed"),
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
-    public ResponseEntity<Map<String, String>> uploadGenericImage(
-            @Parameter(description = "Image file to upload")
-            @RequestParam("image") MultipartFile file,
+    public ResponseEntity<Map<String, Object>> uploadGenericImage(
+            @Parameter(description = "Image files to upload (supports multiple files)")
+            @RequestParam("image") MultipartFile[] files,
             @Parameter(description = "Category for organizing images")
             @RequestParam(value = "category", defaultValue = "general") String category) {
         
-        return uploadImage(file, category);
+        return uploadMultipleImages(files, category);
     }
 
      // Serve uploaded images
@@ -195,7 +197,63 @@ public class ImageController {
         }
     }
 
-     // Common image upload logic
+     // Multiple images upload logic
+    private ResponseEntity<Map<String, Object>> uploadMultipleImages(MultipartFile[] files, String category) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (files == null || files.length == 0) {
+                response.put("error", "Please select at least one image file to upload");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            List<String> uploadedPaths = new ArrayList<>();
+            List<String> fullUrls = new ArrayList<>();
+            List<Map<String, String>> fileDetails = new ArrayList<>();
+            
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    String relativePath = imageUploadService.uploadImage(file, category);
+                    String fullUrl = imageUploadService.getImageUrl(relativePath);
+                    
+                    uploadedPaths.add(relativePath);
+                    fullUrls.add(fullUrl);
+                    
+                    Map<String, String> fileDetail = new HashMap<>();
+                    fileDetail.put("originalFilename", file.getOriginalFilename());
+                    fileDetail.put("uploadedPath", relativePath);
+                    fileDetail.put("url", fullUrl);
+                    fileDetail.put("size", String.valueOf(file.getSize()));
+                    fileDetails.add(fileDetail);
+                }
+            }
+            
+            response.put("message", "Images uploaded successfully");
+            response.put("category", category);
+            response.put("uploadedCount", uploadedPaths.size());
+            response.put("imagePaths", uploadedPaths);
+            response.put("imageUrls", fullUrls);
+            response.put("fileDetails", fileDetails);
+            
+            // For backward compatibility, include first image details at root level
+            if (!uploadedPaths.isEmpty()) {
+                response.put("imagePath", uploadedPaths.get(0));
+                response.put("imageUrl", fullUrls.get(0));
+                response.put("filename", fileDetails.get(0).get("originalFilename"));
+            }
+            
+            log.info("{} images uploaded successfully to category {}", uploadedPaths.size(), category);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IOException e) {
+            log.error("Error uploading images: {}", e.getMessage(), e);
+            response.put("error", "Failed to upload images: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+     // Common single image upload logic (kept for internal use)
     private ResponseEntity<Map<String, String>> uploadImage(MultipartFile file, String category) {
         Map<String, String> response = new HashMap<>();
         
@@ -223,7 +281,7 @@ public class ImageController {
             response.put("error", "Failed to upload image: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
-    } 
+    }
      // Determine content type based on file extension
     private String determineContentType(String filename) {
         String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
