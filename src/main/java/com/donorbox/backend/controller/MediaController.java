@@ -50,10 +50,10 @@ public class MediaController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadCauseVideo(
-            @Parameter(description = "Video files to upload (supports multiple files)")
+            @Parameter(description = "Video file(s) to upload (supports both single and multiple files)")
             @RequestParam("video") MultipartFile[] files) {
         
-        return uploadMultipleVideos(files, "causes");
+        return uploadFlexibleVideos(files, "causes");
     }
 
     @PostMapping("/events/upload-video")
@@ -64,10 +64,10 @@ public class MediaController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadEventVideo(
-            @Parameter(description = "Video files to upload (supports multiple files)")
+            @Parameter(description = "Video file(s) to upload (supports both single and multiple files)")
             @RequestParam("video") MultipartFile[] files) {
         
-        return uploadMultipleVideos(files, "events");
+        return uploadFlexibleVideos(files, "events");
     }
 
     @PostMapping("/personal-causes/upload-video")
@@ -78,10 +78,10 @@ public class MediaController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadPersonalCauseVideo(
-            @Parameter(description = "Video files to upload (supports multiple files)")
+            @Parameter(description = "Video file(s) to upload (supports both single and multiple files)")
             @RequestParam("video") MultipartFile[] files) {
         
-        return uploadMultipleVideos(files, "personal-causes");
+        return uploadFlexibleVideos(files, "personal-causes");
     }
 
     @PostMapping("/public-causes/upload-video")
@@ -92,10 +92,10 @@ public class MediaController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadPublicCauseVideo(
-            @Parameter(description = "Video files to upload (supports multiple files)")
+            @Parameter(description = "Video file(s) to upload (supports both single and multiple files)")
             @RequestParam("video") MultipartFile[] files) {
         
-        return uploadMultipleVideos(files, "public-causes");
+        return uploadFlexibleVideos(files, "public-causes");
     }
 
     @PostMapping("/blogs/upload-video")
@@ -106,10 +106,10 @@ public class MediaController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadBlogVideo(
-            @Parameter(description = "Video files to upload (supports multiple files)")
+            @Parameter(description = "Video file(s) to upload (supports both single and multiple files)")
             @RequestParam("video") MultipartFile[] files) {
         
-        return uploadMultipleVideos(files, "blogs");
+        return uploadFlexibleVideos(files, "blogs");
     }
 
     // =================== GENERIC MEDIA ENDPOINTS ===================
@@ -122,12 +122,12 @@ public class MediaController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadGenericMedia(
-            @Parameter(description = "Media files to upload (supports multiple files)")
+            @Parameter(description = "Media file(s) to upload (supports both single and multiple files)")
             @RequestParam("file") MultipartFile[] files,
             @Parameter(description = "Category for organizing media")
             @RequestParam(value = "category", defaultValue = "general") String category) {
         
-        return uploadMultipleMedia(files, category);
+        return uploadFlexibleMedia(files, category);
     }
 
     // =================== UNIFIED CAUSE MEDIA ENDPOINTS ===================
@@ -140,10 +140,10 @@ public class MediaController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadPersonalCauseMedia(
-            @Parameter(description = "Media files to upload (images or videos - supports multiple files)")
+            @Parameter(description = "Media file(s) to upload (images or videos - supports both single and multiple files)")
             @RequestParam("file") MultipartFile[] files) {
         
-        return uploadMultipleMedia(files, "personal-causes");
+        return uploadFlexibleMedia(files, "personal-causes");
     }
 
     @PostMapping("/public-causes/upload-media")
@@ -154,10 +154,10 @@ public class MediaController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadPublicCauseMedia(
-            @Parameter(description = "Media files to upload (images or videos - supports multiple files)")
+            @Parameter(description = "Media file(s) to upload (images or videos - supports both single and multiple files)")
             @RequestParam("file") MultipartFile[] files) {
         
-        return uploadMultipleMedia(files, "public-causes");
+        return uploadFlexibleMedia(files, "public-causes");
     }
 
     @PostMapping("/causes/upload-media")
@@ -168,10 +168,10 @@ public class MediaController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadCauseMedia(
-            @Parameter(description = "Media files to upload (images or videos - supports multiple files)")
+            @Parameter(description = "Media file(s) to upload (images or videos - supports both single and multiple files)")
             @RequestParam("file") MultipartFile[] files) {
         
-        return uploadMultipleMedia(files, "causes");
+        return uploadFlexibleMedia(files, "causes");
     }
 
     // =================== MEDIA SERVING ENDPOINTS ===================
@@ -1003,4 +1003,171 @@ public class MediaController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
+    /**
+     * Flexible upload method that handles both single and multiple video files
+     * (Helper method called by existing video upload endpoints)
+     */
+    private ResponseEntity<Map<String, Object>> uploadFlexibleVideos(MultipartFile[] files, String category) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (files == null || files.length == 0) {
+                response.put("error", "Please select at least one video file to upload");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            List<String> uploadedPaths = new ArrayList<>();
+            List<String> fullUrls = new ArrayList<>();
+            List<Map<String, String>> fileDetails = new ArrayList<>();
+            
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    String relativePath = mediaUploadService.uploadVideo(file, category);
+                    String fullUrl = mediaUploadService.getMediaUrl(relativePath);
+                    
+                    uploadedPaths.add(relativePath);
+                    fullUrls.add(fullUrl);
+                    
+                    Map<String, String> fileDetail = new HashMap<>();
+                    fileDetail.put("originalFilename", file.getOriginalFilename());
+                    fileDetail.put("uploadedPath", relativePath);
+                    fileDetail.put("url", fullUrl);
+                    fileDetail.put("size", String.valueOf(file.getSize()));
+                    fileDetails.add(fileDetail);
+                }
+            }
+            
+            if (uploadedPaths.isEmpty()) {
+                response.put("error", "No valid video files were uploaded");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Build response based on single vs multiple files
+            if (uploadedPaths.size() == 1) {
+                // Single file response format (backward compatibility)
+                response.put("message", "Video uploaded successfully");
+                response.put("mediaPath", uploadedPaths.get(0));
+                response.put("mediaUrl", fullUrls.get(0));
+                response.put("filename", fileDetails.get(0).get("originalFilename"));
+                response.put("category", category);
+                response.put("size", fileDetails.get(0).get("size"));
+                response.put("mediaType", "VIDEO");
+                
+                log.info("Single video uploaded successfully to category {}", category);
+            } else {
+                // Multiple files response format
+                response.put("message", "Videos uploaded successfully");
+                response.put("category", category);
+                response.put("uploadedCount", uploadedPaths.size());
+                response.put("mediaPaths", uploadedPaths);
+                response.put("mediaUrls", fullUrls);
+                response.put("fileDetails", fileDetails);
+                response.put("mediaType", "VIDEO");
+                
+                // For backward compatibility, also include first video details
+                response.put("mediaPath", uploadedPaths.get(0));
+                response.put("mediaUrl", fullUrls.get(0));
+                response.put("filename", fileDetails.get(0).get("originalFilename"));
+                
+                log.info("{} videos uploaded successfully to category {}", uploadedPaths.size(), category);
+            }
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IOException e) {
+            log.error("Error uploading videos: {}", e.getMessage(), e);
+            response.put("error", "Failed to upload videos: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * Flexible upload method that handles both single and multiple media files (images and videos)
+     * (Helper method called by existing media upload endpoints)
+     */
+    private ResponseEntity<Map<String, Object>> uploadFlexibleMedia(MultipartFile[] files, String category) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (files == null || files.length == 0) {
+                response.put("error", "Please select at least one media file to upload");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            List<String> uploadedPaths = new ArrayList<>();
+            List<String> fullUrls = new ArrayList<>();
+            List<Map<String, String>> fileDetails = new ArrayList<>();
+            
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    String relativePath = mediaUploadService.uploadMedia(file, category);
+                    String fullUrl = mediaUploadService.getMediaUrl(relativePath);
+                    
+                    uploadedPaths.add(relativePath);
+                    fullUrls.add(fullUrl);
+                    
+                    Map<String, String> fileDetail = new HashMap<>();
+                    fileDetail.put("originalFilename", file.getOriginalFilename());
+                    fileDetail.put("uploadedPath", relativePath);
+                    fileDetail.put("url", fullUrl);
+                    fileDetail.put("size", String.valueOf(file.getSize()));
+                    
+                    // Determine media type
+                    String mediaType = "UNKNOWN";
+                    if (mediaUploadService.isImageFile(file.getOriginalFilename())) {
+                        mediaType = "IMAGE";
+                    } else if (mediaUploadService.isVideoFile(file.getOriginalFilename())) {
+                        mediaType = "VIDEO";
+                    }
+                    fileDetail.put("mediaType", mediaType);
+                    
+                    fileDetails.add(fileDetail);
+                }
+            }
+            
+            if (uploadedPaths.isEmpty()) {
+                response.put("error", "No valid media files were uploaded");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Build response based on single vs multiple files
+            if (uploadedPaths.size() == 1) {
+                // Single file response format (backward compatibility)
+                response.put("message", "Media uploaded successfully");
+                response.put("mediaPath", uploadedPaths.get(0));
+                response.put("mediaUrl", fullUrls.get(0));
+                response.put("filename", fileDetails.get(0).get("originalFilename"));
+                response.put("category", category);
+                response.put("size", fileDetails.get(0).get("size"));
+                response.put("mediaType", fileDetails.get(0).get("mediaType"));
+                
+                log.info("Single media file uploaded successfully to category {}", category);
+            } else {
+                // Multiple files response format
+                response.put("message", "Media files uploaded successfully");
+                response.put("category", category);
+                response.put("uploadedCount", uploadedPaths.size());
+                response.put("mediaPaths", uploadedPaths);
+                response.put("mediaUrls", fullUrls);
+                response.put("fileDetails", fileDetails);
+                response.put("mediaType", "MIXED");
+                
+                // For backward compatibility, also include first media details
+                response.put("mediaPath", uploadedPaths.get(0));
+                response.put("mediaUrl", fullUrls.get(0));
+                response.put("filename", fileDetails.get(0).get("originalFilename"));
+                
+                log.info("{} media files uploaded successfully to category {}", uploadedPaths.size(), category);
+            }
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IOException e) {
+            log.error("Error uploading media files: {}", e.getMessage(), e);
+            response.put("error", "Failed to upload media files: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
 }

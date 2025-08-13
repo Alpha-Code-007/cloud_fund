@@ -48,10 +48,10 @@ public class ImageController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadCauseImage(
-            @Parameter(description = "Image files to upload (supports multiple files)")
-            @RequestParam("image") MultipartFile[] files) {
+            @Parameter(description = "Image file(s) to upload (supports both single and multiple files)")
+            @RequestParam(value = "image", required = true) MultipartFile[] files) {
         
-        return uploadMultipleImages(files, "causes");
+        return uploadFlexibleImages(files, "causes");
     }
 
      // Upload an image for events
@@ -64,10 +64,10 @@ public class ImageController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadEventImage(
-            @Parameter(description = "Image files to upload (supports multiple files)")
-            @RequestParam("image") MultipartFile[] files) {
+            @Parameter(description = "Image file(s) to upload (supports both single and multiple files)")
+            @RequestParam(value = "image", required = true) MultipartFile[] files) {
         
-        return uploadMultipleImages(files, "events");
+        return uploadFlexibleImages(files, "events");
     }
 
      // Upload an image for blogs
@@ -79,10 +79,10 @@ public class ImageController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadBlogImage(
-            @Parameter(description = "Image files to upload (supports multiple files)")
-            @RequestParam("image") MultipartFile[] files) {
+            @Parameter(description = "Image file(s) to upload (supports both single and multiple files)")
+            @RequestParam(value = "image", required = true) MultipartFile[] files) {
         
-        return uploadMultipleImages(files, "blogs");
+        return uploadFlexibleImages(files, "blogs");
     }
 
      // Upload an image for personal causes
@@ -94,10 +94,10 @@ public class ImageController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadPersonalCauseImage(
-            @Parameter(description = "Image files to upload (supports multiple files)")
-            @RequestParam("image") MultipartFile[] files) {
+            @Parameter(description = "Image file(s) to upload (supports both single and multiple files)")
+            @RequestParam(value = "image", required = true) MultipartFile[] files) {
         
-        return uploadMultipleImages(files, "personal-causes");
+        return uploadFlexibleImages(files, "personal-causes");
     }
 
      // Upload an image for public causes
@@ -109,10 +109,10 @@ public class ImageController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadPublicCauseImage(
-            @Parameter(description = "Image files to upload (supports multiple files)")
-            @RequestParam("image") MultipartFile[] files) {
+            @Parameter(description = "Image file(s) to upload (supports both single and multiple files)")
+            @RequestParam(value = "image", required = true) MultipartFile[] files) {
         
-        return uploadMultipleImages(files, "public-causes");
+        return uploadFlexibleImages(files, "public-causes");
     }
 
      // Generic image upload method
@@ -124,12 +124,12 @@ public class ImageController {
             @ApiResponse(responseCode = "413", description = "File size too large")
     })
     public ResponseEntity<Map<String, Object>> uploadGenericImage(
-            @Parameter(description = "Image files to upload (supports multiple files)")
-            @RequestParam("image") MultipartFile[] files,
+            @Parameter(description = "Image file(s) to upload (supports both single and multiple files)")
+            @RequestParam(value = "image", required = true) MultipartFile[] files,
             @Parameter(description = "Category for organizing images")
             @RequestParam(value = "category", defaultValue = "general") String category) {
         
-        return uploadMultipleImages(files, category);
+        return uploadFlexibleImages(files, category);
     }
 
      // Serve uploaded images
@@ -194,6 +194,79 @@ public class ImageController {
             response.put("error", "Image not found or could not be deleted");
             response.put("imagePath", imagePath);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
+     // Flexible upload method that handles both single and multiple files
+    private ResponseEntity<Map<String, Object>> uploadFlexibleImages(MultipartFile[] files, String category) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (files == null || files.length == 0) {
+                response.put("error", "Please select at least one image file to upload");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            List<String> uploadedPaths = new ArrayList<>();
+            List<String> fullUrls = new ArrayList<>();
+            List<Map<String, String>> fileDetails = new ArrayList<>();
+            
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    String relativePath = imageUploadService.uploadImage(file, category);
+                    String fullUrl = imageUploadService.getImageUrl(relativePath);
+                    
+                    uploadedPaths.add(relativePath);
+                    fullUrls.add(fullUrl);
+                    
+                    Map<String, String> fileDetail = new HashMap<>();
+                    fileDetail.put("originalFilename", file.getOriginalFilename());
+                    fileDetail.put("uploadedPath", relativePath);
+                    fileDetail.put("url", fullUrl);
+                    fileDetail.put("size", String.valueOf(file.getSize()));
+                    fileDetails.add(fileDetail);
+                }
+            }
+            
+            if (uploadedPaths.isEmpty()) {
+                response.put("error", "No valid image files were uploaded");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Build response based on single vs multiple files
+            if (uploadedPaths.size() == 1) {
+                // Single file response format (backward compatibility)
+                response.put("message", "Image uploaded successfully");
+                response.put("imagePath", uploadedPaths.get(0));
+                response.put("imageUrl", fullUrls.get(0));
+                response.put("filename", fileDetails.get(0).get("originalFilename"));
+                response.put("category", category);
+                response.put("size", fileDetails.get(0).get("size"));
+                
+                log.info("Single image uploaded successfully to category {}", category);
+            } else {
+                // Multiple files response format
+                response.put("message", "Images uploaded successfully");
+                response.put("category", category);
+                response.put("uploadedCount", uploadedPaths.size());
+                response.put("imagePaths", uploadedPaths);
+                response.put("imageUrls", fullUrls);
+                response.put("fileDetails", fileDetails);
+                
+                // For backward compatibility, also include first image details
+                response.put("imagePath", uploadedPaths.get(0));
+                response.put("imageUrl", fullUrls.get(0));
+                response.put("filename", fileDetails.get(0).get("originalFilename"));
+                
+                log.info("{} images uploaded successfully to category {}", uploadedPaths.size(), category);
+            }
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IOException e) {
+            log.error("Error uploading images: {}", e.getMessage(), e);
+            response.put("error", "Failed to upload images: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
