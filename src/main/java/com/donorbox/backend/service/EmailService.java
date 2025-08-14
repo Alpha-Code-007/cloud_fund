@@ -113,14 +113,14 @@ public class EmailService {
                         <h3 style='margin-top: 0; color: #2c5aa0;'>Donation Details:</h3>
                         <p><strong>Amount:</strong> %s %s</p>
                         <p><strong>Cause:</strong> %s</p>
-                        <p><strong>Donation ID:</strong> %s</p>
+                        <p><strong>Payment ID:</strong> %s</p>
                         <p><strong>Date:</strong> %s</p>
                         <p><strong>Phone:</strong> %s</p>
                         <p><strong>Status:</strong> <span style='color: %s;'>%s</span></p>
                     </div>
                     <p>Your generous contribution will make a real difference in supporting our cause. 
                     We will keep you updated on how your donation is being used.</p>
-                    <p>With heartfelt gratitude,<br>The DonorBox Team</p>
+                    <p>With heartfelt gratitude,<br>GreenDharti</p>
                 </div>
                 </body>
                 </html>
@@ -130,7 +130,7 @@ public class EmailService {
                 statusMessage,
                 donation.getCurrency(), donation.getAmount(),
                 causeName,
-                donation.getId(),
+                donation.getPaymentId(),
                 formattedDate,
                 donation.getDonorPhone() != null ? donation.getDonorPhone() : "Not provided",
                 statusColor,
@@ -151,13 +151,13 @@ public class EmailService {
                         <p><strong>Donor Phone:</strong> %s</p>
                         <p><strong>Amount:</strong> %s %s</p>
                         <p><strong>Cause:</strong> %s</p>
-                        <p><strong>Donation ID:</strong> %s</p>
+                        <p><strong>Payment ID:</strong> %s</p>
                         <p><strong>Date:</strong> %s</p>
                         <p><strong>Status:</strong> <span style='color: %s;'>%s</span></p>
                         <p><strong>Message:</strong> %s</p>
                     </div>
                     <p>Please log into the admin dashboard to view more details and manage this donation.</p>
-                    <p>Best regards,<br>DonorBox System</p>
+                    <p>Best regards,<br>GreenDharti</p>
                 </div>
                 </body>
                 </html>
@@ -165,10 +165,10 @@ public class EmailService {
                 orgHeading,
                 donation.getDonorName(),
                 donation.getDonorEmail(),
-                donation.getDonorPhone() != null ? donation.getDonorPhone() : "Not provided",
+                donation.getDonorPhone(),
                 donation.getCurrency(), donation.getAmount(),
                 causeName,
-                donation.getId(),
+                donation.getPaymentId(),
                 formattedDate,
                 statusColor,
                 status,
@@ -218,7 +218,7 @@ public class EmailService {
                 <p>Dear %s,</p>
                 <p>We received your message regarding <strong>%s</strong> on %s. Our team will get back to you shortly.</p>
                 <p><strong>Your Message:</strong><br>%s</p>
-                <p>Thank you,<br>The DonorBox Team</p>
+                <p>Thank you,<br>GreenDharti</p>
                 </div></body></html>
                 """, contactName, subject, formattedDate, content);
  
@@ -261,7 +261,7 @@ public class EmailService {
                 <p><strong>Availability:</strong> %s</p>
                 <p><strong>Registered On:</strong> %s</p>
                 <p>We'll get in touch with you soon regarding the next steps.</p>
-                <p>Warm regards,<br>The DonorBox Team</p>
+                <p>Warm regards,<br>GreenDharti</p>
                 </div></body></html>
                 """, fullName, skills, availability, formattedDate);
  
