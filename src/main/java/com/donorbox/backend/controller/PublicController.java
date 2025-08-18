@@ -66,7 +66,7 @@ public class PublicController {
             Donation donation = donationService.createDonation(request);
            
             // Send email notifications using centralized EmailService
-            emailService.sendDonationEmails(donation, "testing@alphaseam.com");
+            // emailService.sendDonationEmails(donation, "testing@alphaseam.com");
            
             log.info("Donation created with ID: {} and notifications sent", donation.getId());
            
