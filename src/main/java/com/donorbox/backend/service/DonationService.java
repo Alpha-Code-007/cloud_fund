@@ -42,6 +42,7 @@ public class DonationService {
                 .paymentMethod(request.getPaymentMethod())
                 .cause(cause)
                 .message(request.getMessage())
+                .status(Donation.DonationStatus.PENDING)
                 .build();
 
         return donationRepository.save(donation);
