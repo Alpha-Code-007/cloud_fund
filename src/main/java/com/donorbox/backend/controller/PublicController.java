@@ -237,7 +237,7 @@ public class PublicController {
             response.put("donorName", donation.getDonorName());
             response.put("donorEmail", donation.getDonorEmail());
             response.put("causeName", donation.getCause() != null ? donation.getCause().getTitle() : "General Donation");
-             emailService.sendDonationEmails(donation, "testing@alphaseam.com");
+             
             log.info("Donation created with ID: {} and payment order: {}", donation.getId(), order.get("id"));
            
             return new ResponseEntity<>(response, HttpStatus.CREATED);
