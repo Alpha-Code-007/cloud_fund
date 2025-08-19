@@ -9,7 +9,7 @@ import com.donorbox.backend.dto.*;
 
 import lombok.RequiredArgsConstructor;
 
-
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -72,9 +72,22 @@ public class DonationService {
 
         Donation updatedDonation = donationRepository.save(donation);
 
-        // ✅ Use centralized EmailService
-        // emailService.sendDonationEmails(updatedDonation, "testing@alphaseam.com");
-         emailSchedulerService.scheduleDonationEmail(updatedDonation.getId(), "testing@alphaseam.com");
+        // ✅ Update Cause currentAmount when donation is successful
+        if (status == Donation.DonationStatus.COMPLETED && donation.getCause() != null) {
+            Cause cause = donation.getCause();  // Fetch the cause from donation
+
+            if (cause.getCurrentAmount() == null) {
+                cause.setCurrentAmount(BigDecimal.ZERO);
+            }
+
+            cause.setCurrentAmount(cause.getCurrentAmount().add(donation.getAmount()));
+
+            causeRepository.save(cause);
+        }
+
+        // ✅ Send/schedule email
+        emailSchedulerService.scheduleDonationEmail(updatedDonation.getId(), "testing@alphaseam.com");
+
         return updatedDonation;
     }
 
