@@ -26,11 +26,17 @@ public class ImageUploadService {
     @Value("${server.port:8080}")
     private String serverPort;
 
-    @Value("${app.base.url:http://localhost}")
+    @Value("${app.base.url:http://localhost:8080}")
     private String baseUrl;
 
-    private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "webp");
-    private static final long MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+    @Value("${app.upload.image.max-size:25MB}")
+    private String maxFileSizeStr;
+
+    @Value("${app.upload.image.allowed-types:jpg,jpeg,png,gif,webp,bmp,tiff,svg}")
+    private String allowedTypesStr;
+
+    // Default values (fallback)
+    private static final long DEFAULT_MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
     /**
      * Upload an image file to local storage
@@ -113,13 +119,43 @@ public class ImageUploadService {
         return Files.exists(fullPath);
     }
 
+    /**
+     * Parse file size string (e.g., "25MB", "100MB") to bytes
+     * @param sizeStr The size string to parse
+     * @return Size in bytes
+     */
+    private long parseFileSize(String sizeStr) {
+        if (sizeStr == null || sizeStr.trim().isEmpty()) {
+            return DEFAULT_MAX_FILE_SIZE; // fallback to default
+        }
+        
+        sizeStr = sizeStr.trim().toUpperCase();
+        try {
+            if (sizeStr.endsWith("MB")) {
+                long mb = Long.parseLong(sizeStr.substring(0, sizeStr.length() - 2));
+                return mb * 1024 * 1024;
+            } else if (sizeStr.endsWith("KB")) {
+                long kb = Long.parseLong(sizeStr.substring(0, sizeStr.length() - 2));
+                return kb * 1024;
+            } else if (sizeStr.endsWith("B")) {
+                return Long.parseLong(sizeStr.substring(0, sizeStr.length() - 1));
+            } else {
+                return Long.parseLong(sizeStr);
+            }
+        } catch (NumberFormatException e) {
+            log.warn("Invalid file size format: {}, using default", sizeStr);
+            return DEFAULT_MAX_FILE_SIZE;
+        }
+    }
+
     private void validateFile(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IOException("File is empty or null");
         }
 
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IOException("File size exceeds maximum allowed size of " + (MAX_FILE_SIZE / 1024 / 1024) + "MB");
+        long maxFileSize = parseFileSize(maxFileSizeStr);
+        if (file.getSize() > maxFileSize) {
+            throw new IOException("File size exceeds maximum allowed size of " + (maxFileSize / 1024 / 1024) + "MB");
         }
 
         String originalFilename = file.getOriginalFilename();
@@ -127,9 +163,10 @@ public class ImageUploadService {
             throw new IOException("File name is null");
         }
 
+        List<String> allowedTypes = Arrays.asList(allowedTypesStr.split(","));
         String extension = getFileExtension(originalFilename).toLowerCase();
-        if (!ALLOWED_EXTENSIONS.contains(extension)) {
-            throw new IOException("File type not allowed. Allowed types: " + String.join(", ", ALLOWED_EXTENSIONS));
+        if (!allowedTypes.contains(extension)) {
+            throw new IOException("File type not allowed. Allowed types: " + String.join(", ", allowedTypes));
         }
     }
 

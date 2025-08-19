@@ -8,6 +8,7 @@ import com.donorbox.backend.dto.SubmissionActionRequest;
 import com.donorbox.backend.repository.PersonalCauseSubmissionRepository;
 import com.donorbox.backend.repository.CauseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -20,6 +21,9 @@ public class PersonalCauseSubmissionService {
     private final PersonalCauseSubmissionRepository submissionRepository;
     private final CauseRepository causeRepository;
     private final EmailService emailService;
+
+    @Value("${admin.email:testing@alphaseam.com}")
+    private String adminEmail;
 
     public List<PersonalCauseSubmissionResponse> getAllSubmissions() {
         return submissionRepository.findAllOrderByCreatedAtDesc().stream()
@@ -102,7 +106,7 @@ public PersonalCauseSubmissionResponse createSubmission(PersonalCauseSubmissionR
                 + (proofDocumentUrl != null ? "<p><strong>Proof Document:</strong> " + proofDocumentName + " (" + proofDocumentType + ")</p>" : "<p><strong>Proof Document:</strong> Not provided</p>")
                 + "</div>"
                 + "<p>Please review this submission in the admin dashboard.</p>";
-        emailService.sendSubmissionStatusEmail("testing@alphaseam.com", adminSubject, adminHtmlContent);
+        emailService.sendSubmissionStatusEmail(adminEmail, adminSubject, adminHtmlContent);
 
         return PersonalCauseSubmissionResponse.fromEntity(savedSubmission);
     }

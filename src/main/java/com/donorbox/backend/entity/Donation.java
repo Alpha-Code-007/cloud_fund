@@ -51,8 +51,7 @@ public class Donation {
     private String paymentMethod;
 
     @Column(name = "currency")
-    @Builder.Default
-    private String currency = "USD";
+    private String currency;
 
     @Column(name = "payment_id")
     private String paymentId;

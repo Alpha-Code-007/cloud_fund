@@ -3,11 +3,11 @@ package com.donorbox.backend.service;
 import com.donorbox.backend.entity.Donation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -15,46 +15,52 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 @Slf4j
 public class DonationStatusMonitoringService {
-
     private final DonationService donationService;
     private final PaymentService paymentService;
 
+    @Value("${admin.email:testing@alphaseam.com}")
+    private String adminEmail;
+
     /**
-     * Automatically check and update donation statuses every 5 minutes
-     * This will trigger email notifications for status changes
+     * Monitor and update donation statuses automatically
+     * Runs every 5 minutes
      */
     @Scheduled(fixedRate = 300000) // 5 minutes = 300,000 milliseconds
     @Transactional
-    public void monitorAndUpdateDonationStatuses() {
+    public void monitorDonationStatuses() {
         try {
-            log.info("Starting automated donation status monitoring...");
+            log.info("Starting automatic donation status monitoring...");
             
-            // Get all donations that might need status updates
+            // Get pending donations
             List<Donation> pendingDonations = donationService.getPendingDonations();
-            List<Donation> recentDonations = donationService.getRecentDonations(24); // Last 24 hours
             
-            // Process pending donations
-            processPendingDonations(pendingDonations);
+            if (!pendingDonations.isEmpty()) {
+                log.info("Found {} pending donations. Checking statuses...", pendingDonations.size());
+                processPendingDonations(pendingDonations);
+            } else {
+                log.debug("No pending donations found.");
+            }
             
-            // Check recent donations for status changes
-            processRecentDonations(recentDonations);
-            
-            log.info("Automated donation status monitoring completed");
+            // Also check recent donations (last 24 hours) for any status changes
+            List<Donation> recentDonations = donationService.getRecentDonations(24);
+            if (!recentDonations.isEmpty()) {
+                log.info("Checking {} recent donations for status updates...", recentDonations.size());
+                processRecentDonations(recentDonations);
+            }
             
         } catch (Exception e) {
-            log.error("Error during automated donation status monitoring", e);
+            log.error("Error during donation status monitoring", e);
         }
     }
 
     /**
-     * Process pending donations and check if they should be updated
+     * Process pending donations for status updates
      */
     private void processPendingDonations(List<Donation> pendingDonations) {
         for (Donation donation : pendingDonations) {
             try {
-                // Check if donation has been pending too long (more than 30 minutes)
-                if (donation.getCreatedAt().plusMinutes(30).isBefore(LocalDateTime.now())) {
-                    // Check payment status with gateway
+                // Only check donations that have order IDs
+                if (donation.getOrderId() != null && !donation.getOrderId().trim().isEmpty()) {
                     String currentStatus = checkPaymentStatusWithGateway(donation);
                     
                     if (currentStatus != null && !currentStatus.equals(donation.getStatus().name())) {
@@ -66,7 +72,7 @@ public class DonationStatusMonitoringService {
                             newStatus, 
                             donation.getPaymentId(), 
                             donation.getOrderId(),
-                            "testing@alphaseam.com"
+                            adminEmail
                         );
                         
                         log.info("Auto-updated donation {} from {} to {} with notifications", 
@@ -98,7 +104,7 @@ public class DonationStatusMonitoringService {
                             newStatus, 
                             donation.getPaymentId(), 
                             donation.getOrderId(),
-                            "testing@alphaseam.com"
+                            adminEmail
                         );
                         
                         log.info("Auto-updated donation {} from {} to {} with notifications", 
@@ -181,7 +187,7 @@ public class DonationStatusMonitoringService {
             for (Donation donation : oldPendingDonations) {
                 try {
                     // Send follow-up email and increment count
-                    donationService.sendFollowUpEmailWithCount(donation, "testing@alphaseam.com");
+                    donationService.sendFollowUpEmailWithCount(donation, adminEmail);
                     emailsSent++;
                     
                     log.info("Sent follow-up email #{} for pending donation {} (created: {})", 

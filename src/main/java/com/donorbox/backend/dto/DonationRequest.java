@@ -41,9 +41,9 @@ public class DonationRequest {
     @Schema(description = "Message from the donor", example = "Happy to contribute to this cause!")
     private String message;
     
-    @Schema(description = "Currency code", example = "USD")
+    @Schema(description = "Currency code", example = "INR")
     @Builder.Default
-    private String currency = "USD";
+    private String currency = "INR";
     
     @Schema(description = "Payment method", example = "card")
     private String paymentMethod;

@@ -32,7 +32,7 @@ public class Blog {
     private String slug;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String content;
 
     @Column(length = 300)

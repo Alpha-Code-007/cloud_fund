@@ -183,7 +183,7 @@ public class PublicController {
     })
     public ResponseEntity<java.util.Map<String, Object>> createPaymentOrder(
             @RequestParam BigDecimal amount,
-            @RequestParam(defaultValue = "USD") String currency,
+            @RequestParam(defaultValue = "INR") String currency,
             @RequestParam String receiptId) {
         try {
             com.razorpay.Order order = paymentService.createOrder(amount, currency, receiptId);

@@ -15,6 +15,7 @@ com\donorbox\backend\entity\Donation.class
 com\donorbox\backend\controller\PublicController.class
 com\donorbox\backend\controller\DocumentController.class
 com\donorbox\backend\dto\HomepageStatsResponse.class
+com\donorbox\backend\config\SchedulingConfig.class
 com\donorbox\backend\dto\CauseRequest$CauseRequestBuilder.class
 com\donorbox\backend\dto\SubmissionActionRequest.class
 com\donorbox\backend\dto\VolunteerRequest.class
@@ -22,6 +23,7 @@ com\donorbox\backend\controller\MediaController.class
 com\donorbox\backend\repository\PersonalCauseSubmissionRepository.class
 com\donorbox\backend\entity\Volunteer$VolunteerBuilder.class
 com\donorbox\backend\service\ImageUploadService.class
+com\donorbox\backend\config\SchedulerConfig.class
 com\donorbox\backend\entity\Cause.class
 com\donorbox\backend\dto\BlogResponse$BlogResponseBuilder.class
 com\donorbox\backend\repository\BlogRepository.class
@@ -43,10 +45,13 @@ com\donorbox\backend\dto\CauseResponse$CauseResponseBuilder.class
 com\donorbox\backend\repository\UserRepository.class
 com\donorbox\backend\repository\VolunteerRepository.class
 com\donorbox\backend\config\WebConfig.class
+com\donorbox\backend\service\EmailSchedulerService$1.class
 com\donorbox\backend\entity\Event$EventBuilder.class
 com\donorbox\backend\dto\ContactRequest$ContactRequestBuilder.class
+com\donorbox\backend\service\DonationStatusMonitoringService.class
 com\donorbox\backend\DonorboxBackendApplication.class
 com\donorbox\backend\entity\Donation$DonationStatus.class
+com\donorbox\backend\service\EmailSchedulerService.class
 com\donorbox\backend\entity\Message.class
 com\donorbox\backend\entity\PersonalCauseSubmission$SubmissionStatus.class
 com\donorbox\backend\entity\Blog.class

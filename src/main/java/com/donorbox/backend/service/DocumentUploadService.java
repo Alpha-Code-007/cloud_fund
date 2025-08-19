@@ -26,8 +26,17 @@ public class DocumentUploadService {
     @Value("${server.port:8080}")
     private String serverPort;
 
+    @Value("${app.base.url:http://localhost:8080}")
+    private String baseUrl;
+
+    @Value("${app.upload.document.max-size:10MB}")
+    private String maxFileSizeStr;
+
+    @Value("${app.upload.document.allowed-types:jpg,jpeg,png,gif,webp,pdf,doc,docx}")
+    private String allowedTypesStr;
+
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB for documents - will be overridden by config
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "webp", "pdf", "doc", "docx");
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB for documents
 
     /**
      * Upload a document file to local storage
@@ -91,7 +100,9 @@ public class DocumentUploadService {
         if (relativePath == null || relativePath.trim().isEmpty()) {
             return null;
         }
-        return "https://cloud-fund-i1kt.onrender.com" + serverPort + "/api/documents/" + relativePath;
+        // Build URL dynamically based on configuration
+        String port = serverPort.equals("8080") ? "" : ":" + serverPort;
+        return baseUrl + port + "/api/documents/" + relativePath;
     }
 
     /**
@@ -149,8 +160,10 @@ public class DocumentUploadService {
             throw new IOException("File is empty or null");
         }
 
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IOException("File size exceeds maximum allowed size of " + (MAX_FILE_SIZE / 1024 / 1024) + "MB");
+        long maxSize = parseFileSize(maxFileSizeStr);
+        if (file.getSize() > maxSize) {
+            throw new IOException("File size exceeds maximum allowed size of " + 
+                (maxSize / 1024 / 1024) + "MB");
         }
 
         String originalFilename = file.getOriginalFilename();
@@ -158,9 +171,39 @@ public class DocumentUploadService {
             throw new IOException("File name is null");
         }
 
+        List<String> allowedTypes = Arrays.asList(allowedTypesStr.split(","));
         String extension = extractFileExtension(originalFilename).toLowerCase();
-        if (!ALLOWED_EXTENSIONS.contains(extension)) {
-            throw new IOException("File type not allowed. Allowed types: " + String.join(", ", ALLOWED_EXTENSIONS));
+        if (!allowedTypes.contains(extension)) {
+            throw new IOException("File type not allowed. Allowed types: " + String.join(", ", allowedTypes));
+        }
+    }
+
+    /**
+     * Parse file size string (e.g., "10MB", "25MB") to bytes
+     * @param sizeStr The size string to parse
+     * @return Size in bytes
+     */
+    private long parseFileSize(String sizeStr) {
+        if (sizeStr == null || sizeStr.trim().isEmpty()) {
+            return MAX_FILE_SIZE; // fallback to default
+        }
+        
+        sizeStr = sizeStr.trim().toUpperCase();
+        try {
+            if (sizeStr.endsWith("MB")) {
+                long mb = Long.parseLong(sizeStr.substring(0, sizeStr.length() - 2));
+                return mb * 1024 * 1024;
+            } else if (sizeStr.endsWith("KB")) {
+                long kb = Long.parseLong(sizeStr.substring(0, sizeStr.length() - 2));
+                return kb * 1024;
+            } else if (sizeStr.endsWith("B")) {
+                return Long.parseLong(sizeStr.substring(0, sizeStr.length() - 1));
+            } else {
+                return Long.parseLong(sizeStr);
+            }
+        } catch (NumberFormatException e) {
+            log.warn("Invalid file size format: {}, using default", sizeStr);
+            return MAX_FILE_SIZE;
         }
     }
 

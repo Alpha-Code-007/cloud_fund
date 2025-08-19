@@ -27,22 +27,24 @@ public class MediaUploadService {
     @Value("${server.port:8080}")
     private String serverPort;
 
-    @Value("${app.base.url:http://localhost}")
+    @Value("${app.base.url:http://localhost:8080}")
     private String baseUrl;
 
-    // Image file extensions
-    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList(
-        "jpg", "jpeg", "png", "gif", "webp", "bmp", "tiff", "svg"
-    );
+    @Value("${app.upload.image.max-size:25MB}")
+    private String maxImageSizeStr;
 
-    // Video file extensions
-    private static final List<String> ALLOWED_VIDEO_EXTENSIONS = Arrays.asList(
-        "mp4", "avi", "mov", "wmv", "flv", "webm", "mkv", "m4v", "3gp", "ogv"
-    );
+    @Value("${app.upload.video.max-size:100MB}")
+    private String maxVideoSizeStr;
 
-    // File size limits
-    private static final long MAX_IMAGE_SIZE = 25 * 1024 * 1024; // 25MB for images
-    private static final long MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB for videos
+    @Value("${app.upload.image.allowed-types:jpg,jpeg,png,gif,webp,bmp,tiff,svg}")
+    private String allowedImageTypesStr;
+
+    @Value("${app.upload.video.allowed-types:mp4,avi,mov,wmv,flv,webm,mkv,m4v,3gp,ogv}")
+    private String allowedVideoTypesStr;
+
+    // Default file size limits (fallback)
+    private static final long DEFAULT_MAX_IMAGE_SIZE = 25 * 1024 * 1024; // 25MB for images
+    private static final long DEFAULT_MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB for videos
 
     /**
      * Upload a media file (image or video) to local storage
@@ -157,7 +159,8 @@ public class MediaUploadService {
     public boolean isImageFile(String filename) {
         if (filename == null) return false;
         String extension = getFileExtension(filename).toLowerCase();
-        return ALLOWED_IMAGE_EXTENSIONS.contains(extension);
+        List<String> allowedTypes = Arrays.asList(allowedImageTypesStr.split(","));
+        return allowedTypes.contains(extension);
     }
 
     /**
@@ -168,7 +171,37 @@ public class MediaUploadService {
     public boolean isVideoFile(String filename) {
         if (filename == null) return false;
         String extension = getFileExtension(filename).toLowerCase();
-        return ALLOWED_VIDEO_EXTENSIONS.contains(extension);
+        List<String> allowedTypes = Arrays.asList(allowedVideoTypesStr.split(","));
+        return allowedTypes.contains(extension);
+    }
+
+    /**
+     * Parse file size string (e.g., "25MB", "100MB") to bytes
+     * @param sizeStr The size string to parse
+     * @return Size in bytes
+     */
+    private long parseFileSize(String sizeStr) {
+        if (sizeStr == null || sizeStr.trim().isEmpty()) {
+            return DEFAULT_MAX_IMAGE_SIZE; // fallback to default
+        }
+        
+        sizeStr = sizeStr.trim().toUpperCase();
+        try {
+            if (sizeStr.endsWith("MB")) {
+                long mb = Long.parseLong(sizeStr.substring(0, sizeStr.length() - 2));
+                return mb * 1024 * 1024;
+            } else if (sizeStr.endsWith("KB")) {
+                long kb = Long.parseLong(sizeStr.substring(0, sizeStr.length() - 2));
+                return kb * 1024;
+            } else if (sizeStr.endsWith("B")) {
+                return Long.parseLong(sizeStr.substring(0, sizeStr.length() - 1));
+            } else {
+                return Long.parseLong(sizeStr);
+            }
+        } catch (NumberFormatException e) {
+            log.warn("Invalid file size format: {}, using default", sizeStr);
+            return DEFAULT_MAX_IMAGE_SIZE;
+        }
     }
 
     /**
@@ -249,24 +282,33 @@ public class MediaUploadService {
         }
 
         String extension = getFileExtension(originalFilename).toLowerCase();
-        boolean isImage = ALLOWED_IMAGE_EXTENSIONS.contains(extension);
-        boolean isVideo = ALLOWED_VIDEO_EXTENSIONS.contains(extension);
+        List<String> allowedImageTypes = Arrays.asList(allowedImageTypesStr.split(","));
+        List<String> allowedVideoTypes = Arrays.asList(allowedVideoTypesStr.split(","));
+        
+        boolean isImage = allowedImageTypes.contains(extension);
+        boolean isVideo = allowedVideoTypes.contains(extension);
 
         if (!isImage && !isVideo) {
             throw new IOException("File type not allowed. Allowed types: " + 
-                String.join(", ", ALLOWED_IMAGE_EXTENSIONS) + ", " + 
-                String.join(", ", ALLOWED_VIDEO_EXTENSIONS));
+                String.join(", ", allowedImageTypes) + ", " + 
+                String.join(", ", allowedVideoTypes));
         }
 
         // Check file size based on type
-        if (isImage && file.getSize() > MAX_IMAGE_SIZE) {
+        if (isImage) {
+            long maxImageSize = parseFileSize(maxImageSizeStr);
+            if (file.getSize() > maxImageSize) {
             throw new IOException("Image size exceeds maximum allowed size of " + 
-                (MAX_IMAGE_SIZE / 1024 / 1024) + "MB");
+                    (maxImageSize / 1024 / 1024) + "MB");
+            }
         }
 
-        if (isVideo && file.getSize() > MAX_VIDEO_SIZE) {
+        if (isVideo) {
+            long maxVideoSize = parseFileSize(maxVideoSizeStr);
+            if (file.getSize() > maxVideoSize) {
             throw new IOException("Video size exceeds maximum allowed size of " + 
-                (MAX_VIDEO_SIZE / 1024 / 1024) + "MB");
+                    (maxVideoSize / 1024 / 1024) + "MB");
+            }
         }
     }
 
@@ -275,9 +317,10 @@ public class MediaUploadService {
             throw new IOException("Image file is empty or null");
         }
 
-        if (file.getSize() > MAX_IMAGE_SIZE) {
+        long maxImageSize = parseFileSize(maxImageSizeStr);
+        if (file.getSize() > maxImageSize) {
             throw new IOException("Image size exceeds maximum allowed size of " + 
-                (MAX_IMAGE_SIZE / 1024 / 1024) + "MB");
+                (maxImageSize / 1024 / 1024) + "MB");
         }
 
         String originalFilename = file.getOriginalFilename();
@@ -285,10 +328,11 @@ public class MediaUploadService {
             throw new IOException("Image file name is null");
         }
 
+        List<String> allowedImageTypes = Arrays.asList(allowedImageTypesStr.split(","));
         String extension = getFileExtension(originalFilename).toLowerCase();
-        if (!ALLOWED_IMAGE_EXTENSIONS.contains(extension)) {
+        if (!allowedImageTypes.contains(extension)) {
             throw new IOException("Image type not allowed. Allowed types: " + 
-                String.join(", ", ALLOWED_IMAGE_EXTENSIONS));
+                String.join(", ", allowedImageTypes));
         }
     }
 
@@ -297,9 +341,10 @@ public class MediaUploadService {
             throw new IOException("Video file is empty or null");
         }
 
-        if (file.getSize() > MAX_VIDEO_SIZE) {
+        long maxVideoSize = parseFileSize(maxVideoSizeStr);
+        if (file.getSize() > maxVideoSize) {
             throw new IOException("Video size exceeds maximum allowed size of " + 
-                (MAX_VIDEO_SIZE / 1024 / 1024) + "MB");
+                (maxVideoSize / 1024 / 1024) + "MB");
         }
 
         String originalFilename = file.getOriginalFilename();
@@ -307,10 +352,11 @@ public class MediaUploadService {
             throw new IOException("Video file name is null");
         }
 
+        List<String> allowedVideoTypes = Arrays.asList(allowedVideoTypesStr.split(","));
         String extension = getFileExtension(originalFilename).toLowerCase();
-        if (!ALLOWED_VIDEO_EXTENSIONS.contains(extension)) {
+        if (!allowedVideoTypes.contains(extension)) {
             throw new IOException("Video type not allowed. Allowed types: " + 
-                String.join(", ", ALLOWED_VIDEO_EXTENSIONS));
+                String.join(", ", allowedVideoTypes));
         }
     }
 

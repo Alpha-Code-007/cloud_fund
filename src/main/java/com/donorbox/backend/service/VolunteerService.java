@@ -1,5 +1,6 @@
 package com.donorbox.backend.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.donorbox.backend.repository.*;
@@ -14,6 +15,9 @@ import java.util.List;
 public class VolunteerService {
     private final VolunteerRepository volunteerRepository;
     private final EmailService emailService;
+
+    @Value("${admin.email:testing@alphaseam.com}")
+    private String adminEmail;
 
     @Transactional
     public Volunteer registerVolunteer(VolunteerRequest request) {
@@ -30,7 +34,6 @@ public class VolunteerService {
                 .build();
 
         Volunteer savedVolunteer = volunteerRepository.save(volunteer);
-        String adminEmail = "testing@alphaseam.com"; // Admin email
         emailService.sendVolunteerNotificationEmails(
             volunteer.getFirstName(),
             volunteer.getLastName(),

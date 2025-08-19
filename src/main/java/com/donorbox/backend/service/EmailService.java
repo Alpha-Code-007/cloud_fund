@@ -3,7 +3,8 @@ package com.donorbox.backend.service;
 import com.donorbox.backend.entity.Donation;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -12,11 +13,14 @@ import org.springframework.stereotype.Service;
 import java.time.format.DateTimeFormatter;
 
 @Service
+@Slf4j
 public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Autowired
+    @Value("${spring.mail.username:testing@alphaseam.com}")
+    private String fromEmail;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
@@ -24,7 +28,7 @@ public class EmailService {
     public void sendSimpleMessage(String to, String subject, String text) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("testing@alphaseam.com");
+            message.setFrom(fromEmail);
             message.setTo(to);
             message.setSubject(subject);
             message.setText(text);
@@ -38,7 +42,7 @@ public class EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
-        helper.setFrom("testing@alphaseam.com");
+        helper.setFrom(fromEmail);
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(htmlContent, true);

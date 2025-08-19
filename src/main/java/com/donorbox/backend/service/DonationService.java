@@ -1,13 +1,14 @@
 package com.donorbox.backend.service;
 
+import com.donorbox.backend.dto.DonationRequest;
+import com.donorbox.backend.entity.Cause;
+import com.donorbox.backend.entity.Donation;
+import com.donorbox.backend.repository.CauseRepository;
+import com.donorbox.backend.repository.DonationRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.donorbox.backend.repository.*;
-import com.donorbox.backend.entity.*;
-import com.donorbox.backend.dto.*;
-
-import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,12 +16,13 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class DonationService {
-
     private final DonationRepository donationRepository;
     private final CauseRepository causeRepository;
-    private final PaymentService paymentService;
-    private final EmailService emailService;
     private final EmailSchedulerService emailSchedulerService;
+    private final EmailService emailService;
+
+    @Value("${admin.email:testing@alphaseam.com}")
+    private String adminEmail;
 
     @Transactional
     public Donation createDonation(DonationRequest request) {
@@ -30,20 +32,13 @@ public class DonationService {
                     .orElseThrow(() -> new IllegalArgumentException("Cause not found"));
         }
 
-        // Validate currency support
-        if (!paymentService.isCurrencySupported(request.getCurrency())) {
-            throw new IllegalArgumentException("Currency not supported: " + request.getCurrency());
-        }
-
         Donation donation = Donation.builder()
                 .donorName(request.getDonorName())
                 .donorEmail(request.getDonorEmail())
                 .donorPhone(request.getDonorPhone())
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
-                .paymentMethod(request.getPaymentMethod())
                 .cause(cause)
-                .message(request.getMessage())
                 .status(Donation.DonationStatus.PENDING)
                 .build();
 
@@ -52,9 +47,13 @@ public class DonationService {
 
     @Transactional(readOnly = true)
     public List<Donation> getAllDonations() {
-        List<Donation> donations = donationRepository.findAll();
-        System.out.println("Donations retrieved: " + donations.size());
-        return donations;
+        return donationRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Donation getDonationById(Long id) {
+        return donationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Donation not found with id: " + id));
     }
 
     @Transactional
@@ -74,7 +73,7 @@ public class DonationService {
 
         // ✅ Update Cause currentAmount when donation is successful
         if (status == Donation.DonationStatus.COMPLETED && donation.getCause() != null) {
-            Cause cause = donation.getCause();  // Fetch the cause from donation
+            Cause cause = donation.getCause();
 
             if (cause.getCurrentAmount() == null) {
                 cause.setCurrentAmount(BigDecimal.ZERO);
@@ -86,7 +85,7 @@ public class DonationService {
         }
 
         // ✅ Send/schedule email
-        emailSchedulerService.scheduleDonationEmail(updatedDonation.getId(), "testing@alphaseam.com");
+        emailSchedulerService.scheduleDonationEmail(updatedDonation.getId(), adminEmail);
 
         return updatedDonation;
     }
@@ -139,7 +138,7 @@ public class DonationService {
 
         // ✅ Always send email notification when status changes
         if (oldStatus != status || status == Donation.DonationStatus.PENDING) {
-            emailSchedulerService.scheduleDonationEmail(updatedDonation.getId(), orgEmail != null ? orgEmail : "testing@alphaseam.com");
+            emailSchedulerService.scheduleDonationEmail(updatedDonation.getId(), orgEmail != null ? orgEmail : adminEmail);
         }
 
         return updatedDonation;
@@ -183,13 +182,12 @@ public class DonationService {
     @Transactional
     public void sendFollowUpEmailWithCount(Donation donation, String orgEmail) {
         try {
-            // Send the follow-up email
-            emailService.sendDonationEmails(donation, orgEmail);
-            
-            // Increment the follow-up email count
+            // Increment follow-up email count
             donation.setFollowupEmailCount(donation.getFollowupEmailCount() + 1);
             donationRepository.save(donation);
             
+            // Send the follow-up email
+            emailService.sendDonationEmails(donation, orgEmail);
             System.out.println("Follow-up email #" + donation.getFollowupEmailCount() + " sent for donation " + donation.getId());
         } catch (Exception e) {
             System.err.println("Error sending follow-up email for donation " + donation.getId() + ": " + e.getMessage());
