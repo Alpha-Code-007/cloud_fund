@@ -74,6 +74,10 @@ public class Donation {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "followup_email_count", nullable = false)
+    @Builder.Default
+    private Integer followupEmailCount = 0;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

@@ -105,4 +105,94 @@ public class DonationService {
         donation.setOrderId(orderId);
         return donationRepository.save(donation);
     }
+
+    /**
+     * Update donation status with email notifications - can be called from admin or webhook
+     */
+    @Transactional
+    public Donation updateDonationStatusWithNotification(Long donationId, Donation.DonationStatus status, String paymentId, String orderId, String orgEmail) {
+        Donation donation = donationRepository.findById(donationId)
+                .orElseThrow(() -> new IllegalArgumentException("Donation not found with id: " + donationId));
+
+        Donation.DonationStatus oldStatus = donation.getStatus();
+        donation.setStatus(status);
+        if (paymentId != null) {
+            donation.setPaymentId(paymentId);
+        }
+        if (orderId != null) {
+            donation.setOrderId(orderId);
+        }
+
+        Donation updatedDonation = donationRepository.save(donation);
+
+        // ✅ Update Cause currentAmount when donation is successful
+        if (status == Donation.DonationStatus.COMPLETED && donation.getCause() != null) {
+            Cause cause = donation.getCause();
+
+            if (cause.getCurrentAmount() == null) {
+                cause.setCurrentAmount(BigDecimal.ZERO);
+            }
+
+            cause.setCurrentAmount(cause.getCurrentAmount().add(donation.getAmount()));
+            causeRepository.save(cause);
+        }
+
+        // ✅ Always send email notification when status changes
+        if (oldStatus != status || status == Donation.DonationStatus.PENDING) {
+            emailSchedulerService.scheduleDonationEmail(updatedDonation.getId(), orgEmail != null ? orgEmail : "testing@alphaseam.com");
+        }
+
+        return updatedDonation;
+    }
+
+    // Methods for automated monitoring
+    @Transactional(readOnly = true)
+    public List<Donation> getPendingDonations() {
+        return donationRepository.findByStatus(Donation.DonationStatus.PENDING);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Donation> getRecentDonations(int hoursBack) {
+        java.time.LocalDateTime cutoffTime = java.time.LocalDateTime.now().minusHours(hoursBack);
+        return donationRepository.findByCreatedAtAfter(cutoffTime);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Donation> getOldPendingDonations(int hoursBack) {
+        java.time.LocalDateTime cutoffTime = java.time.LocalDateTime.now().minusHours(hoursBack);
+        return donationRepository.findByStatusAndCreatedAtBefore(Donation.DonationStatus.PENDING, cutoffTime);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Donation> getOldPendingDonationsForFollowup(int hoursBack, int maxFollowupCount) {
+        java.time.LocalDateTime cutoffTime = java.time.LocalDateTime.now().minusHours(hoursBack);
+        return donationRepository.findByStatusAndCreatedAtBeforeAndFollowupEmailCountLessThan(
+            Donation.DonationStatus.PENDING, cutoffTime, maxFollowupCount);
+    }
+
+    @Transactional
+    public void sendFollowUpEmail(Donation donation, String orgEmail) {
+        try {
+            emailService.sendDonationEmails(donation, orgEmail);
+            System.out.println("Follow-up email sent for donation " + donation.getId());
+        } catch (Exception e) {
+            System.err.println("Error sending follow-up email for donation " + donation.getId() + ": " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public void sendFollowUpEmailWithCount(Donation donation, String orgEmail) {
+        try {
+            // Send the follow-up email
+            emailService.sendDonationEmails(donation, orgEmail);
+            
+            // Increment the follow-up email count
+            donation.setFollowupEmailCount(donation.getFollowupEmailCount() + 1);
+            donationRepository.save(donation);
+            
+            System.out.println("Follow-up email #" + donation.getFollowupEmailCount() + " sent for donation " + donation.getId());
+        } catch (Exception e) {
+            System.err.println("Error sending follow-up email for donation " + donation.getId() + ": " + e.getMessage());
+        }
+    }
 }

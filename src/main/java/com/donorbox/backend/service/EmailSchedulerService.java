@@ -20,20 +20,45 @@ public class EmailSchedulerService {
 
     public void scheduleDonationEmail(Long donationId, String orgEmail) {
         donationRepository.findById(donationId).ifPresent(donation -> {
-            String status = donation.getStatus().name();
+            Donation.DonationStatus status = donation.getStatus();
 
-            if ("SUCCESS".equalsIgnoreCase(status) || "FAILED".equalsIgnoreCase(status)) {
-                // Send immediately
-                emailService.sendDonationEmails(donation, orgEmail);
-            } else {
-                // Schedule for 10 minutes later (likely pending case)
-                Instant sendTime = Instant.now().plusMillis(TimeUnit.MINUTES.toMillis(10));
-
-                taskScheduler.schedule(() -> {
-                    donationRepository.findById(donationId).ifPresent(latestDonation -> {
-                        emailService.sendDonationEmails(latestDonation, orgEmail);
-                    });
-                }, sendTime);
+            switch (status) {
+                case COMPLETED:
+                    // Send immediately for completed payments
+                    emailService.sendDonationEmails(donation, orgEmail);
+                    break;
+                    
+                case FAILED:
+                    // Send immediately for failed payments
+                    emailService.sendDonationEmails(donation, orgEmail);
+                    break;
+                    
+                case REFUNDED:
+                    // Send immediately for refunded payments
+                    emailService.sendDonationEmails(donation, orgEmail);
+                    break;
+                    
+                case PENDING:
+                    // Send immediately for pending status as well
+                    // Users should know their donation is being processed
+                    emailService.sendDonationEmails(donation, orgEmail);
+                    
+                    // Also schedule a follow-up email after 10 minutes to check final status
+                    Instant followUpTime = Instant.now().plusMillis(TimeUnit.MINUTES.toMillis(10));
+                    taskScheduler.schedule(() -> {
+                        donationRepository.findById(donationId).ifPresent(latestDonation -> {
+                            // Only send follow-up if status has changed from PENDING
+                            if (latestDonation.getStatus() != Donation.DonationStatus.PENDING) {
+                                emailService.sendDonationEmails(latestDonation, orgEmail);
+                            }
+                        });
+                    }, followUpTime);
+                    break;
+                    
+                default:
+                    // Send immediately for any unknown status
+                    emailService.sendDonationEmails(donation, orgEmail);
+                    break;
             }
         });
     }

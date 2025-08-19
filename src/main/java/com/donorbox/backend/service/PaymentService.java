@@ -258,4 +258,38 @@ public class PaymentService {
     public boolean isCurrencySupported(String currency) {
         return getSupportedCurrencies().containsKey(currency);
     }
+
+    /**
+     * Get payment status from Razorpay gateway
+     * @param orderId Order ID to check status
+     * @return Payment status as string
+     */
+    public String getPaymentStatus(String orderId) {
+        try {
+            // Fetch order from Razorpay
+            Order order = razorpayClient.orders.fetch(orderId);
+            String status = order.get("status");
+            
+            log.debug("Payment status for order {}: {}", orderId, status);
+            
+            // Map Razorpay statuses to our system
+            switch (status.toLowerCase()) {
+                case "paid":
+                    return "COMPLETED";
+                case "created":
+                case "attempted":
+                    return "PENDING";
+                case "failed":
+                    return "FAILED";
+                default:
+                    return "PENDING";
+            }
+        } catch (RazorpayException e) {
+            log.error("Error fetching payment status for order: {}", orderId, e);
+            return null;
+        } catch (Exception e) {
+            log.error("Unexpected error checking payment status for order: {}", orderId, e);
+            return null;
+        }
+    }
 }
