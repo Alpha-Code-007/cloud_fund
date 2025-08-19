@@ -50,6 +50,8 @@ public class AdminController {
     private final PersonalCauseSubmissionService personalCauseSubmissionService;
     private final MediaUploadService mediaUploadService;
     private final DonationService donationService;
+    private final EmailService emailService;
+    private final DonationStatusMonitoringService monitoringService;
 
     // Admin Causes Management
     @GetMapping("/causes")
@@ -212,11 +214,12 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             if (video != null && video.length > 0) {
                 // Upload multiple videos
                 List<String> videoPaths = mediaUploadService.uploadMultipleVideos(video, "causes");
-                // For backward compatibility, set the first video as the main video URL
                 if (!videoPaths.isEmpty()) {
-                    cause.setVideoUrl(videoPaths.get(0)); // Store first video as primary
+                    // Set first video as primary for backward compatibility
+                    cause.setVideoUrl(videoPaths.get(0));
                     cause.setMediaType(Cause.MediaType.VIDEO);
-                    // TODO: Store additional videos in videoUrls list when entity supports it
+                    // Store all video URLs in the videoUrls list
+                    cause.setVideoUrls(videoPaths);
                 }
             }
 
@@ -269,11 +272,12 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
 
                 // Upload multiple videos
                 List<String> videoPaths = mediaUploadService.uploadMultipleVideos(video, "causes");
-                // For backward compatibility, set the first video as the main video URL
                 if (!videoPaths.isEmpty()) {
-                    existingCause.setVideoUrl(videoPaths.get(0)); // Store first video as primary
+                    // Set first video as primary for backward compatibility
+                    existingCause.setVideoUrl(videoPaths.get(0));
                     existingCause.setMediaType(Cause.MediaType.VIDEO);
-                    // TODO: Store additional videos in videoUrls list when entity supports it
+                    // Store all video URLs in the videoUrls list
+                    existingCause.setVideoUrls(videoPaths);
                 }
             }
 
@@ -381,10 +385,11 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             if (image != null && image.length > 0) {
                 // Upload multiple images
                 List<String> imagePaths = mediaUploadService.uploadMultipleImages(image, "causes");
-                // For backward compatibility, set the first image as the main image URL
                 if (!imagePaths.isEmpty()) {
-                    cause.setImageUrl(imagePaths.get(0)); // Store first image as primary
-                    // TODO: Store additional images in imageUrls list when entity supports it
+                    // Set first image as primary for backward compatibility
+                    cause.setImageUrl(imagePaths.get(0));
+                    // Store all image URLs in the imageUrls list
+                    cause.setImageUrls(imagePaths);
                 }
             }
             
@@ -437,10 +442,11 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
                 
                 // Upload multiple images
                 List<String> imagePaths = mediaUploadService.uploadMultipleImages(image, "causes");
-                // For backward compatibility, set the first image as the main image URL
                 if (!imagePaths.isEmpty()) {
-                    existingCause.setImageUrl(imagePaths.get(0)); // Store first image as primary
-                    // TODO: Store additional images in imageUrls list when entity supports it
+                    // Set first image as primary for backward compatibility
+                    existingCause.setImageUrl(imagePaths.get(0));
+                    // Store all image URLs in the imageUrls list
+                    existingCause.setImageUrls(imagePaths);
                 }
             }
             
@@ -976,6 +982,127 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    // ====================================
+    // Admin Donation Status Management
+    // ====================================
+
+    @PutMapping("/donations/{id}/status")
+    @Operation(summary = "Admin - Update donation status", description = "Update donation status and send notification emails to donor and organization")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Donation status updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Donation not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid status or request data")
+    })
+    public ResponseEntity<Map<String, Object>> updateDonationStatus(
+            @Parameter(description = "Donation ID") @PathVariable Long id,
+            @Parameter(description = "New donation status") @RequestParam("status") String status,
+            @Parameter(description = "Payment ID (optional)") @RequestParam(value = "paymentId", required = false) String paymentId,
+            @Parameter(description = "Order ID (optional)") @RequestParam(value = "orderId", required = false) String orderId,
+            @Parameter(description = "Organization email (optional)") @RequestParam(value = "orgEmail", required = false) String orgEmail) {
+        
+        try {
+            // Validate status
+            Donation.DonationStatus donationStatus;
+            try {
+                donationStatus = Donation.DonationStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid status. Valid values: COMPLETED, FAILED, PENDING, REFUNDED");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            // Update donation status with email notifications
+            Donation updatedDonation = donationService.updateDonationStatusWithNotification(
+                    id, donationStatus, paymentId, orderId, orgEmail);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Donation status updated to " + status + " and notification emails sent");
+            response.put("donationId", updatedDonation.getId());
+            response.put("newStatus", updatedDonation.getStatus());
+            response.put("donorEmail", updatedDonation.getDonorEmail());
+            response.put("donorName", updatedDonation.getDonorName());
+            response.put("amount", updatedDonation.getAmount());
+            response.put("currency", updatedDonation.getCurrency());
+            response.put("causeName", updatedDonation.getCause() != null ? updatedDonation.getCause().getTitle() : "General Fund");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to update donation status: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    @PostMapping("/donations/{id}/resend-notification")
+    @Operation(summary = "Admin - Resend donation notification emails", description = "Manually resend notification emails for a donation to donor and organization")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Notification emails sent successfully"),
+            @ApiResponse(responseCode = "404", description = "Donation not found"),
+            @ApiResponse(responseCode = "400", description = "Error sending emails")
+    })
+    public ResponseEntity<Map<String, Object>> resendDonationNotification(
+            @Parameter(description = "Donation ID") @PathVariable Long id,
+            @Parameter(description = "Organization email (optional)") @RequestParam(value = "orgEmail", required = false) String orgEmail) {
+        
+        try {
+            // Find the donation
+            List<Donation> donations = donationService.getAllDonations();
+            Donation donation = donations.stream()
+                    .filter(d -> d.getId().equals(id))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Donation not found"));
+
+            // Send emails directly
+            emailService.sendDonationEmails(donation, orgEmail != null ? orgEmail : "testing@alphaseam.com");
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Notification emails sent successfully");
+            response.put("donationId", donation.getId());
+            response.put("status", donation.getStatus());
+            response.put("donorEmail", donation.getDonorEmail());
+            response.put("sentToOrg", orgEmail != null ? orgEmail : "testing@alphaseam.com");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to send notification emails: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    @PostMapping("/donations/force-check-status")
+    @Operation(summary = "Admin - Force check all donation statuses", description = "Manually trigger status checking for all donations with payment gateway and send notifications for any status changes")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Force check initiated successfully"),
+            @ApiResponse(responseCode = "400", description = "Error initiating force check")
+    })
+    public ResponseEntity<Map<String, Object>> forceCheckDonationStatuses() {
+        try {
+            // Trigger the manual check
+            monitoringService.forceCheckAllDonations();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Force check of all donation statuses has been initiated. Email notifications will be sent for any status changes found.");
+            response.put("timestamp", java.time.LocalDateTime.now());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to initiate force check: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 }

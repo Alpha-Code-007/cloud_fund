@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -76,7 +77,10 @@ public class PersonalCauseSubmissionController {
         try {
             String imageUrl = null;
             String videoUrl = null;
+            List<String> imageUrls = new ArrayList<>();
+            List<String> videoUrls = new ArrayList<>();
             String proofDocumentUrl = null;
+            List<String> proofDocumentUrls = new ArrayList<>();
             String proofDocumentName = null;
             String proofDocumentType = null;
             
@@ -84,24 +88,36 @@ public class PersonalCauseSubmissionController {
             if (media != null && media.length > 0) {
                 List<String> uploadedPaths = mediaUploadService.uploadMultipleMedia(media, "personal-causes");
                 
-                // Process first media file for compatibility (you can extend this logic)
-                if (!uploadedPaths.isEmpty()) {
-                    String firstMediaPath = uploadedPaths.get(0);
-                    String firstFileName = media[0].getOriginalFilename();
+                // Separate images and videos from uploaded media
+                for (int i = 0; i < uploadedPaths.size() && i < media.length; i++) {
+                    String mediaPath = uploadedPaths.get(i);
+                    String fileName = media[i].getOriginalFilename();
                     
-                    if (mediaUploadService.isImageFile(firstFileName)) {
-                        imageUrl = firstMediaPath;
-                    } else if (mediaUploadService.isVideoFile(firstFileName)) {
-                        videoUrl = firstMediaPath;
+                    if (mediaUploadService.isImageFile(fileName)) {
+                        imageUrls.add(mediaPath);
+                        if (imageUrl == null) imageUrl = mediaPath; // Set first image for compatibility
+                    } else if (mediaUploadService.isVideoFile(fileName)) {
+                        videoUrls.add(mediaPath);
+                        if (videoUrl == null) videoUrl = mediaPath; // Set first video for compatibility
                     }
                 }
             }
             
-            // Handle proof document upload if provided (first document for compatibility)
-            if (proofDocument != null && proofDocument.length > 0 && !proofDocument[0].isEmpty()) {
-                proofDocumentUrl = documentUploadService.uploadDocument(proofDocument[0], "proof-documents");
-                proofDocumentName = proofDocument[0].getOriginalFilename();
-                proofDocumentType = documentUploadService.getFileExtension(proofDocumentUrl);
+            // Handle proof document upload if provided (supports multiple documents)
+            if (proofDocument != null && proofDocument.length > 0) {
+                for (MultipartFile document : proofDocument) {
+                    if (document != null && !document.isEmpty()) {
+                        String documentUrl = documentUploadService.uploadDocument(document, "proof-documents");
+                        proofDocumentUrls.add(documentUrl);
+                        
+                        // Set first document info for compatibility
+                        if (proofDocumentUrl == null) {
+                            proofDocumentUrl = documentUrl;
+                            proofDocumentName = document.getOriginalFilename();
+                            proofDocumentType = documentUploadService.getFileExtension(documentUrl);
+                        }
+                    }
+                }
             }
             
             // Create request object

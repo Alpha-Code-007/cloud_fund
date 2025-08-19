@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "personal_cause_submissions")
@@ -44,14 +45,29 @@ public class PersonalCauseSubmission {
     @Column(name = "target_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal targetAmount;
 
-@Column(name = "image_url")
+    @Column(name = "image_url")
     private String imageUrl;
 
     @Column(name = "video_url")
     private String videoUrl;
 
+    @ElementCollection
+    @CollectionTable(name = "personal_cause_submission_images", joinColumns = @JoinColumn(name = "submission_id"))
+    @Column(name = "image_url")
+    private List<String> imageUrls;
+
+    @ElementCollection
+    @CollectionTable(name = "personal_cause_submission_videos", joinColumns = @JoinColumn(name = "submission_id"))
+    @Column(name = "video_url")
+    private List<String> videoUrls;
+
     @Column(name = "proof_document_url")
     private String proofDocumentUrl;
+
+    @ElementCollection
+    @CollectionTable(name = "personal_cause_submission_documents", joinColumns = @JoinColumn(name = "submission_id"))
+    @Column(name = "document_url")
+    private List<String> proofDocumentUrls;
 
     @Column(name = "proof_document_name")
     private String proofDocumentName;
