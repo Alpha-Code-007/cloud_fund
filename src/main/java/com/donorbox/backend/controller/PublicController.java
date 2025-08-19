@@ -281,7 +281,7 @@ public class PublicController {
                         request.getPaymentId(),
                         request.getOrderId()
                     );
-                    emailService.sendDonationEmails(donation, "testing@alphaseam.com");
+                   
                     log.info("Donation status updated to COMPLETED for order: {}", request.getOrderId());
                 }
             } catch (Exception e) {

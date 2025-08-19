@@ -9,6 +9,7 @@ import com.donorbox.backend.dto.*;
 
 import lombok.RequiredArgsConstructor;
 
+
 import java.util.List;
 
 @Service
@@ -19,6 +20,7 @@ public class DonationService {
     private final CauseRepository causeRepository;
     private final PaymentService paymentService;
     private final EmailService emailService;
+    private final EmailSchedulerService emailSchedulerService;
 
     @Transactional
     public Donation createDonation(DonationRequest request) {
@@ -72,7 +74,7 @@ public class DonationService {
 
         // ✅ Use centralized EmailService
         // emailService.sendDonationEmails(updatedDonation, "testing@alphaseam.com");
-
+         emailSchedulerService.scheduleDonationEmail(updatedDonation.getId(), "testing@alphaseam.com");
         return updatedDonation;
     }
 
