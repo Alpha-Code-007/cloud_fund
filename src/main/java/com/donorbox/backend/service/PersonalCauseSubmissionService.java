@@ -99,7 +99,7 @@ public PersonalCauseSubmissionResponse createSubmission(PersonalCauseSubmissionR
                 + "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>"
                 + "<p><strong>Title:</strong> " + request.getTitle() + "</p>"
                 + "<p><strong>Submitter:</strong> " + request.getSubmitterName() + " (" + request.getSubmitterEmail() + ")</p>"
-                + "<p><strong>Target Amount:</strong> $" + request.getTargetAmount() + "</p>"
+                + "<p><strong>Target Amount:</strong> INR" + request.getTargetAmount() + "</p>"
                 + "<p><strong>Category:</strong> " + (request.getCategory() != null ? request.getCategory() : "Not specified") + "</p>"
                 + "<p><strong>Location:</strong> " + (request.getLocation() != null ? request.getLocation() : "Not specified") + "</p>"
                 + "<p><strong>Description:</strong> " + request.getDescription() + "</p>"
