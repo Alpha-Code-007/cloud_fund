@@ -73,7 +73,7 @@ public class Donation {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "followup_email_count", nullable = false)
+    @Column(name = "followup_email_count", nullable = true)
     @Builder.Default
     private Integer followupEmailCount = 0;
 
