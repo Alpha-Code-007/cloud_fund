@@ -88,8 +88,12 @@ public PersonalCauseSubmissionResponse createSubmission(PersonalCauseSubmissionR
 
         // Send email to submitter
         String subject = "Your Cause Submission is Under Review";
-        String htmlContent = "<p>Thank you, " + request.getSubmitterName() + ", for submitting your cause titled '<strong>"
-                + request.getTitle() + "</strong>'. Your submission is under review. We will notify you upon approval or rejection.</p>";
+        String htmlContent = "<p>Thank you, " + request.getSubmitterName() + 
+    ", for submitting your cause titled '<strong>" + request.getTitle() + 
+    "</strong>'. Your submission is under review. We will notify you upon approval or rejection.</p>"
+    + "<br><br>"
+    + "Best regards,<br>"
+    + "GreenDharti";
         emailService.sendSubmissionStatusEmail(request.getSubmitterEmail(), subject, htmlContent);
 
         // Send notification to admin/organization
