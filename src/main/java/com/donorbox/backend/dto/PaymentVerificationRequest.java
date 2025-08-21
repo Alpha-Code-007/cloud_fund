@@ -46,7 +46,7 @@ public class PaymentVerificationRequest {
     
     @Schema(description = "Currency code", example = "INR")
     @Builder.Default
-    private String currency = "INR";
+    private String currency = "INR ";
     
     @Schema(description = "Name of the cause donated to", example = "Education for All")
     private String causeName;

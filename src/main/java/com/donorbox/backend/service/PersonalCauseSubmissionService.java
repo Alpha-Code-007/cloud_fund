@@ -100,7 +100,7 @@ String adminHtmlContent = "<h3>New Personal Cause Submission</h3>"
         + "<p><strong>Title:</strong> " + request.getTitle() + "</p>"
         + "<p><strong>Submitter:</strong> " + request.getSubmitterName() + " (" + request.getSubmitterEmail() + ")</p>"
         + "<p><strong>Mobile Number:</strong> " + request.getSubmitterPhone() + "</p>"   // ✅ Phone added here
-        + "<p><strong>Target Amount:</strong> INR" + request.getTargetAmount() + "</p>"
+        + "<p><strong>Target Amount:</strong> INR " + request.getTargetAmount() + "</p>"
         + "<p><strong>Category:</strong> " + (request.getCategory() != null ? request.getCategory() : "Not specified") + "</p>"
         + "<p><strong>Location:</strong> " + (request.getLocation() != null ? request.getLocation() : "Not specified") + "</p>"
         + "<p><strong>Description:</strong> " + request.getDescription() + "</p>"
