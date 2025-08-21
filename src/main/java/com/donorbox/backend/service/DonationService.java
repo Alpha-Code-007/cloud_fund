@@ -40,6 +40,8 @@ public class DonationService {
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
                 .cause(cause)
+                .message(request.getMessage())
+                .paymentMethod(request.getPaymentMethod())
                 .status(Donation.DonationStatus.PENDING)
                 .build();
 

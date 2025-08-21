@@ -124,6 +124,7 @@ public class EmailService {
                         <p><strong>Date:</strong> %s</p>
                         <p><strong>Phone:</strong> %s</p>
                         <p><strong>Status:</strong> <span style='color: %s;'>%s</span></p>
+                        %s
                     </div>
                     <p>Your generous contribution will make a real difference in supporting our cause. 
                     We will keep you updated on how your donation is being used.</p>
@@ -141,7 +142,10 @@ public class EmailService {
                 formattedDate,
                 donation.getDonorPhone() != null ? donation.getDonorPhone() : "Not provided",
                 statusColor,
-                status
+                status,
+                donation.getMessage() != null && !donation.getMessage().trim().isEmpty() 
+                    ? "<p><strong>Your Message:</strong> " + donation.getMessage() + "</p>" 
+                    : ""
             );
 
             // Organization HTML Email
