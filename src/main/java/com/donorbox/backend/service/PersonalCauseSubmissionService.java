@@ -94,21 +94,23 @@ public PersonalCauseSubmissionResponse createSubmission(PersonalCauseSubmissionR
 
         // Send notification to admin/organization
         String adminSubject = "New Personal Cause Submission - " + request.getTitle();
-        String adminHtmlContent = "<h3>New Personal Cause Submission</h3>"
-                + "<p>A new personal cause has been submitted for review:</p>"
-                + "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>"
-                + "<p><strong>Title:</strong> " + request.getTitle() + "</p>"
-                + "<p><strong>Submitter:</strong> " + request.getSubmitterName() + " (" + request.getSubmitterEmail() + ")</p>"
-                + "<p><strong>Target Amount:</strong> INR" + request.getTargetAmount() + "</p>"
-                + "<p><strong>Category:</strong> " + (request.getCategory() != null ? request.getCategory() : "Not specified") + "</p>"
-                + "<p><strong>Location:</strong> " + (request.getLocation() != null ? request.getLocation() : "Not specified") + "</p>"
-                + "<p><strong>Description:</strong> " + request.getDescription() + "</p>"
-                + (proofDocumentUrl != null ? "<p><strong>Proof Document:</strong> " + proofDocumentName + " (" + proofDocumentType + ")</p>" : "<p><strong>Proof Document:</strong> Not provided</p>")
-                + "</div>"
-                + "<p>Please review this submission in the admin dashboard.</p>";
-        emailService.sendSubmissionStatusEmail(adminEmail, adminSubject, adminHtmlContent);
+String adminHtmlContent = "<h3>New Personal Cause Submission</h3>"
+        + "<p>A new personal cause has been submitted for review:</p>"
+        + "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>"
+        + "<p><strong>Title:</strong> " + request.getTitle() + "</p>"
+        + "<p><strong>Submitter:</strong> " + request.getSubmitterName() + " (" + request.getSubmitterEmail() + ")</p>"
+        + "<p><strong>Mobile Number:</strong> " + request.getSubmitterPhone() + "</p>"   // ✅ Phone added here
+        + "<p><strong>Target Amount:</strong> INR" + request.getTargetAmount() + "</p>"
+        + "<p><strong>Category:</strong> " + (request.getCategory() != null ? request.getCategory() : "Not specified") + "</p>"
+        + "<p><strong>Location:</strong> " + (request.getLocation() != null ? request.getLocation() : "Not specified") + "</p>"
+        + "<p><strong>Description:</strong> " + request.getDescription() + "</p>"
+        + (proofDocumentUrl != null ? "<p><strong>Proof Document:</strong> " + proofDocumentName + " (" + proofDocumentType + ")</p>" : "<p><strong>Proof Document:</strong> Not provided</p>")
+        + "</div>"
+        + "<p>Please review this submission in the admin dashboard.</p>";
+emailService.sendSubmissionStatusEmail(adminEmail, adminSubject, adminHtmlContent);
 
-        return PersonalCauseSubmissionResponse.fromEntity(savedSubmission);
+return PersonalCauseSubmissionResponse.fromEntity(savedSubmission);
+
     }
 
     @Transactional
