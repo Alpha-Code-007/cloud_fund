@@ -25,6 +25,8 @@ public class DateTimeUtil {
     
     /**
      * Converts a LocalDateTime to Asia/Kolkata timezone and formats it for email display
+     * Since LocalDateTime doesn't carry timezone info, we treat it as if it's already in Asia/Kolkata
+     * for consistent display across the application
      * 
      * @param dateTime the LocalDateTime to convert
      * @return formatted date string in Asia/Kolkata timezone
@@ -34,10 +36,9 @@ public class DateTimeUtil {
             return "N/A";
         }
         
-        return dateTime
-            .atZone(ZoneId.systemDefault())
-            .withZoneSameInstant(KOLKATA_ZONE)
-            .format(EMAIL_DATE_FORMATTER);
+        // Treat the LocalDateTime as if it's already in Asia/Kolkata timezone
+        // This ensures consistent display regardless of when the record was created
+        return dateTime.format(EMAIL_DATE_FORMATTER);
     }
     
     /**
@@ -54,6 +55,8 @@ public class DateTimeUtil {
     
     /**
      * Converts a LocalDateTime to Asia/Kolkata timezone and formats it for display
+     * Since LocalDateTime doesn't carry timezone info, we treat it as if it's already in Asia/Kolkata
+     * for consistent display across the application
      * 
      * @param dateTime the LocalDateTime to convert
      * @return formatted date string in Asia/Kolkata timezone for display
@@ -63,10 +66,9 @@ public class DateTimeUtil {
             return "N/A";
         }
         
-        return dateTime
-            .atZone(ZoneId.systemDefault())
-            .withZoneSameInstant(KOLKATA_ZONE)
-            .format(DISPLAY_DATE_FORMATTER);
+        // Treat the LocalDateTime as if it's already in Asia/Kolkata timezone
+        // This ensures consistent display regardless of when the record was created
+        return dateTime.format(DISPLAY_DATE_FORMATTER);
     }
     
     /**
@@ -80,6 +82,8 @@ public class DateTimeUtil {
     
     /**
      * Converts a LocalDateTime to Asia/Kolkata timezone
+     * Since LocalDateTime doesn't carry timezone info, we treat it as if it's already in Asia/Kolkata
+     * for consistent handling across the application
      * 
      * @param dateTime the LocalDateTime to convert
      * @return LocalDateTime in Asia/Kolkata timezone
@@ -89,10 +93,9 @@ public class DateTimeUtil {
             return null;
         }
         
-        return dateTime
-            .atZone(ZoneId.systemDefault())
-            .withZoneSameInstant(KOLKATA_ZONE)
-            .toLocalDateTime();
+        // Treat the LocalDateTime as if it's already in Asia/Kolkata timezone
+        // This ensures consistent handling regardless of when the record was created
+        return dateTime;
     }
     
     /**
