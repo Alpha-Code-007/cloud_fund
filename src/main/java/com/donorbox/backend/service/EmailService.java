@@ -11,6 +11,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
+import com.donorbox.backend.util.DateTimeUtil;
 
 @Service
 @Slf4j
@@ -103,7 +105,8 @@ public class EmailService {
                 default -> "Donation Status Update";
             };
 
-            String formattedDate = donation.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"));
+            // Format date in Asia/Kolkata timezone
+            String formattedDate = DateTimeUtil.formatForEmail(donation.getCreatedAt());
 
             // Donor HTML Email
             String donorHtml = String.format("""
@@ -198,7 +201,8 @@ public class EmailService {
 
     public void sendContactNotificationEmails(String contactName, String contactEmail, String contactPhone, String subject, String content, String orgEmail) {
         try {
-            String formattedDate = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"));
+            // Format date in Asia/Kolkata timezone
+            String formattedDate = DateTimeUtil.getCurrentTimeForEmail();
  
             String orgSubject = "New Contact Form Submission: " + subject;
             String orgHtml = String.format("""
@@ -236,7 +240,8 @@ public class EmailService {
      public void sendVolunteerNotificationEmails(String firstName, String lastName, String email, String phone, String skills, String availability, String experience, String motivation, String orgEmail) {
         try {
             String fullName = firstName + " " + lastName;
-            String formattedDate = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"));
+            // Format date in Asia/Kolkata timezone
+            String formattedDate = DateTimeUtil.getCurrentTimeForEmail();
  
             String orgSubject = "New Volunteer Registration: " + fullName;
             String orgHtml = String.format("""

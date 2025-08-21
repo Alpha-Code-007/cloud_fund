@@ -47,6 +47,7 @@ com\donorbox\backend\repository\VolunteerRepository.class
 com\donorbox\backend\config\WebConfig.class
 com\donorbox\backend\service\EmailSchedulerService$1.class
 com\donorbox\backend\entity\Event$EventBuilder.class
+com\donorbox\backend\util\DateTimeUtil.class
 com\donorbox\backend\dto\ContactRequest$ContactRequestBuilder.class
 com\donorbox\backend\service\DonationStatusMonitoringService.class
 com\donorbox\backend\DonorboxBackendApplication.class
