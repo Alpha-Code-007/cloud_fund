@@ -4,6 +4,7 @@ import com.donorbox.backend.dto.BlogRequest;
 import com.donorbox.backend.dto.BlogResponse;
 import com.donorbox.backend.entity.Blog;
 import com.donorbox.backend.repository.BlogRepository;
+import com.donorbox.backend.util.DateTimeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -55,7 +56,7 @@ public class BlogService {
 
         // Set published date if status is PUBLISHED
         if (Blog.BlogStatus.PUBLISHED.equals(request.getStatus())) {
-            blog.setPublishedAt(LocalDateTime.now());
+            blog.setPublishedAt(DateTimeUtil.getCurrentTimeForDatabase());
         }
 
         Blog savedBlog = blogRepository.save(blog);
@@ -100,7 +101,7 @@ public class BlogService {
 
         // Set or clear published date based on status
         if (Blog.BlogStatus.PUBLISHED.equals(request.getStatus()) && !Blog.BlogStatus.PUBLISHED.equals(oldStatus)) {
-            existingBlog.setPublishedAt(LocalDateTime.now());
+            existingBlog.setPublishedAt(DateTimeUtil.getCurrentTimeForDatabase());
         } else if (!Blog.BlogStatus.PUBLISHED.equals(request.getStatus()) && Blog.BlogStatus.PUBLISHED.equals(oldStatus)) {
             existingBlog.setPublishedAt(null);
         }
@@ -204,7 +205,7 @@ public class BlogService {
             
             // Set or clear published date based on status
             if (Blog.BlogStatus.PUBLISHED.equals(request.getStatus()) && !Blog.BlogStatus.PUBLISHED.equals(oldStatus)) {
-                existingBlog.setPublishedAt(LocalDateTime.now());
+                existingBlog.setPublishedAt(DateTimeUtil.getCurrentTimeForDatabase());
             } else if (!Blog.BlogStatus.PUBLISHED.equals(request.getStatus()) && Blog.BlogStatus.PUBLISHED.equals(oldStatus)) {
                 existingBlog.setPublishedAt(null);
             }

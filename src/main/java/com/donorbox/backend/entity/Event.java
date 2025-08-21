@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import com.donorbox.backend.util.DateTimeUtil;
 
 import java.time.LocalDateTime;
 
@@ -67,14 +68,14 @@ public class Event {
 
     @PrePersist
     protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = DateTimeUtil.getCurrentTimeForDatabase();
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = DateTimeUtil.getCurrentTimeForDatabase();
     }
 
     public enum EventStatus {

@@ -1,5 +1,6 @@
 package com.donorbox.backend.entity;
 
+import com.donorbox.backend.util.DateTimeUtil;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -101,7 +102,7 @@ public class Blog {
 
     public void publish() {
         this.status = BlogStatus.PUBLISHED;
-        this.publishedAt = LocalDateTime.now();
+        this.publishedAt = DateTimeUtil.getCurrentTimeForDatabase();
     }
 
     public void unpublish() {

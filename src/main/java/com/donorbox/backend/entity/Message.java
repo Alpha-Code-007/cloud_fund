@@ -1,5 +1,6 @@
 package com.donorbox.backend.entity;
 
+import com.donorbox.backend.util.DateTimeUtil;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
@@ -56,13 +57,13 @@ public class Message {
     
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = DateTimeUtil.getCurrentTimeForDatabase();
+        updatedAt = DateTimeUtil.getCurrentTimeForDatabase();
     }
     
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = DateTimeUtil.getCurrentTimeForDatabase();
     }
     
     public enum MessageStatus {

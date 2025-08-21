@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import com.donorbox.backend.util.DateTimeUtil;
 
 //blog controller
 
@@ -1095,7 +1096,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Force check of all donation statuses has been initiated. Email notifications will be sent for any status changes found.");
-            response.put("timestamp", java.time.LocalDateTime.now());
+            response.put("timestamp", DateTimeUtil.getCurrentKolkataTime());
             
             return ResponseEntity.ok(response);
             

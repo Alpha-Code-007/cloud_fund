@@ -5,6 +5,7 @@ import com.donorbox.backend.entity.Cause;
 import com.donorbox.backend.entity.Donation;
 import com.donorbox.backend.repository.CauseRepository;
 import com.donorbox.backend.repository.DonationRepository;
+import com.donorbox.backend.util.DateTimeUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -152,19 +153,19 @@ public class DonationService {
 
     @Transactional(readOnly = true)
     public List<Donation> getRecentDonations(int hoursBack) {
-        java.time.LocalDateTime cutoffTime = java.time.LocalDateTime.now().minusHours(hoursBack);
+        java.time.LocalDateTime cutoffTime = DateTimeUtil.getCurrentKolkataTime().minusHours(hoursBack);
         return donationRepository.findByCreatedAtAfter(cutoffTime);
     }
 
     @Transactional(readOnly = true)
     public List<Donation> getOldPendingDonations(int hoursBack) {
-        java.time.LocalDateTime cutoffTime = java.time.LocalDateTime.now().minusHours(hoursBack);
+        java.time.LocalDateTime cutoffTime = DateTimeUtil.getCurrentKolkataTime().minusHours(hoursBack);
         return donationRepository.findByStatusAndCreatedAtBefore(Donation.DonationStatus.PENDING, cutoffTime);
     }
 
     @Transactional(readOnly = true)
     public List<Donation> getOldPendingDonationsForFollowup(int hoursBack, int maxFollowupCount) {
-        java.time.LocalDateTime cutoffTime = java.time.LocalDateTime.now().minusHours(hoursBack);
+        java.time.LocalDateTime cutoffTime = DateTimeUtil.getCurrentKolkataTime().minusHours(hoursBack);
         return donationRepository.findByStatusAndCreatedAtBeforeAndFollowupEmailCountLessThan(
             Donation.DonationStatus.PENDING, cutoffTime, maxFollowupCount);
     }

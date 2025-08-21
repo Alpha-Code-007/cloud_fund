@@ -1,6 +1,7 @@
 package com.donorbox.backend.dto;
 
 import com.donorbox.backend.entity.Cause;
+import com.donorbox.backend.util.DateTimeUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -124,7 +125,7 @@ public class CauseResponse {
             return null;
         }
         
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = DateTimeUtil.getCurrentKolkataTime();
         if (cause.getEndDate().isBefore(now)) {
             return 0L;
         }

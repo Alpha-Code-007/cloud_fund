@@ -1,6 +1,7 @@
 package com.donorbox.backend.dto;
 
 import com.donorbox.backend.entity.PersonalCauseSubmission;
+import com.donorbox.backend.util.DateTimeUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -44,9 +45,16 @@ public class PersonalCauseSubmissionResponse {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    // Formatted timestamps for display
+    private String formattedCreatedAt;
+    private String formattedUpdatedAt;
+    private String formattedApprovedAt;
+    private String formattedRejectedAt;
+    private String formattedEndDate;
 
     public static PersonalCauseSubmissionResponse fromEntity(PersonalCauseSubmission submission) {
-        return PersonalCauseSubmissionResponse.builder()
+        PersonalCauseSubmissionResponse response = PersonalCauseSubmissionResponse.builder()
                 .id(submission.getId())
                 .title(submission.getTitle())
                 .description(submission.getDescription())
@@ -73,10 +81,19 @@ public class PersonalCauseSubmissionResponse {
                 .createdAt(submission.getCreatedAt())
                 .updatedAt(submission.getUpdatedAt())
                 .build();
+        
+        // Set formatted timestamps
+        response.setFormattedCreatedAt(DateTimeUtil.formatForDisplay(submission.getCreatedAt()));
+        response.setFormattedUpdatedAt(DateTimeUtil.formatForDisplay(submission.getUpdatedAt()));
+        response.setFormattedApprovedAt(DateTimeUtil.formatForDisplay(submission.getApprovedAt()));
+        response.setFormattedRejectedAt(DateTimeUtil.formatForDisplay(submission.getRejectedAt()));
+        response.setFormattedEndDate(DateTimeUtil.formatForDisplay(submission.getEndDate()));
+        
+        return response;
     }
 
     public static PersonalCauseSubmissionResponse summaryFromEntity(PersonalCauseSubmission submission) {
-        return PersonalCauseSubmissionResponse.builder()
+        PersonalCauseSubmissionResponse response = PersonalCauseSubmissionResponse.builder()
                 .id(submission.getId())
                 .title(submission.getTitle())
                 .description(submission.getDescription())
@@ -103,5 +120,14 @@ public class PersonalCauseSubmissionResponse {
                 .updatedAt(submission.getUpdatedAt())
                 .causeId(submission.getCauseId())
                 .build();
+        
+        // Set formatted timestamps
+        response.setFormattedCreatedAt(DateTimeUtil.formatForDisplay(submission.getCreatedAt()));
+        response.setFormattedUpdatedAt(DateTimeUtil.formatForDisplay(submission.getUpdatedAt()));
+        response.setFormattedApprovedAt(DateTimeUtil.formatForDisplay(submission.getApprovedAt()));
+        response.setFormattedRejectedAt(DateTimeUtil.formatForDisplay(submission.getRejectedAt()));
+        response.setFormattedEndDate(DateTimeUtil.formatForDisplay(submission.getEndDate()));
+        
+        return response;
     }
 }

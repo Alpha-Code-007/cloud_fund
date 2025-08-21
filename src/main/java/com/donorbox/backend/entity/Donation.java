@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import com.donorbox.backend.util.DateTimeUtil;
 
 @Entity
 @Table(name = "donations")
@@ -79,13 +80,13 @@ public class Donation {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = DateTimeUtil.getCurrentTimeForDatabase();
+        updatedAt = DateTimeUtil.getCurrentTimeForDatabase();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = DateTimeUtil.getCurrentTimeForDatabase();
     }
 
     public enum DonationStatus {

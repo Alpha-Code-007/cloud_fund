@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import com.donorbox.backend.util.DateTimeUtil;
 
 @Service
 @Slf4j
@@ -220,7 +221,7 @@ public class DocumentUploadService {
 
     private String generateUniqueFilename(String originalFilename) {
         String extension = extractFileExtension(originalFilename);
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String timestamp = DateTimeUtil.getCurrentTimeForFileNaming();
         String uuid = UUID.randomUUID().toString().substring(0, 8);
         
         return timestamp + "_" + uuid + "." + extension;

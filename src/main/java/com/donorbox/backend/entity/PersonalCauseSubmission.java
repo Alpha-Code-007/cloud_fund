@@ -14,6 +14,7 @@ import lombok.ToString;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.List;
+import com.donorbox.backend.util.DateTimeUtil;
 
 @Entity
 @Table(name = "personal_cause_submissions")
@@ -130,13 +131,13 @@ public class PersonalCauseSubmission {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = DateTimeUtil.getCurrentTimeForDatabase();
+        updatedAt = DateTimeUtil.getCurrentTimeForDatabase();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = DateTimeUtil.getCurrentTimeForDatabase();
     }
 
     public enum SubmissionStatus {
