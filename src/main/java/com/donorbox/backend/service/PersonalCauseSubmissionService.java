@@ -91,7 +91,7 @@ public PersonalCauseSubmissionResponse createSubmission(PersonalCauseSubmissionR
         String htmlContent = "<p>Thank you, " + request.getSubmitterName() + 
     ", for submitting your cause titled '<strong>" + request.getTitle() + 
     "</strong>'. Your submission is under review. We will notify you upon approval or rejection.</p>"
-    + "<br><br>"
+    + "<br>"
     + "Best regards,<br>"
     + "GreenDharti";
         emailService.sendSubmissionStatusEmail(request.getSubmitterEmail(), subject, htmlContent);
@@ -158,7 +158,10 @@ return PersonalCauseSubmissionResponse.fromEntity(savedSubmission);
         // Notify submitter of approval
         String subject = "Your Cause Submission Has Been Approved";
         String htmlContent = "<p>Congratulations, " + submission.getSubmitterName() + ", your cause titled '<strong>" 
-                + submission.getTitle() + "</strong>' has been approved and is now live on our platform!</p>";
+                + submission.getTitle() + "</strong>' has been approved and is now live on our platform!</p>"
+                 + "<br>"
+    + "Best regards,<br>"
+    + "GreenDharti";
         emailService.sendSubmissionStatusEmail(submission.getSubmitterEmail(), subject, htmlContent);
 
         return PersonalCauseSubmissionResponse.fromEntity(submission);
@@ -176,7 +179,10 @@ return PersonalCauseSubmissionResponse.fromEntity(savedSubmission);
         // Notify submitter of rejection
         String subject = "Your Cause Submission Has Been Rejected";
         String htmlContent = "<p>Hello, " + submission.getSubmitterName() + ". We regret to inform you that your cause titled '<strong>"
-                + submission.getTitle() + "</strong>' has been rejected. Admin Notes: " + actionRequest.getAdminNotes() + "</p>";
+                + submission.getTitle() + "</strong>' has been rejected. Admin Notes: " + actionRequest.getAdminNotes() + "</p>"
+                 + "<br>"
+    + "Best regards,<br>"
+    + "GreenDharti";
         emailService.sendSubmissionStatusEmail(submission.getSubmitterEmail(), subject, htmlContent);
 
         return PersonalCauseSubmissionResponse.fromEntity(submission);
