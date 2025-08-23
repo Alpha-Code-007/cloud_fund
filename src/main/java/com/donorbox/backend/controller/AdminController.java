@@ -202,6 +202,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Target amount") @RequestParam("targetAmount") String targetAmount,
             @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
+            @Parameter(description = "End date (ISO format)") @RequestParam(value = "endDate", required = false) String endDate,
             @Parameter(description = "Video file. Accepts only one file.") @RequestParam(value = "video", required = false) MultipartFile video) {
 
         try {
@@ -214,6 +215,11 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
                     .category(category)
                     .location(location)
                     .build();
+            
+            // Set end date if provided
+            if (endDate != null && !endDate.trim().isEmpty()) {
+                cause.setEndDate(java.time.LocalDateTime.parse(endDate));
+            }
 
             // Handle video upload if provided
             if (video != null && !video.isEmpty()) {
@@ -253,6 +259,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Target amount") @RequestParam(value = "targetAmount", required = false) String targetAmount,
             @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
+            @Parameter(description = "End date (ISO format)") @RequestParam(value = "endDate", required = false) String endDate,
             @Parameter(description = "Video file. Accepts only one file.") @RequestParam(value = "video", required = false) MultipartFile video) {
 
         try {
@@ -266,6 +273,9 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             if (targetAmount != null) existingCause.setTargetAmount(new java.math.BigDecimal(targetAmount));
             if (category != null) existingCause.setCategory(category);
             if (location != null) existingCause.setLocation(location);
+            if (endDate != null && !endDate.trim().isEmpty()) {
+                existingCause.setEndDate(java.time.LocalDateTime.parse(endDate));
+            }
 
             // Handle video upload if provided
             if (video != null && !video.isEmpty()) {
@@ -371,6 +381,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Target amount") @RequestParam("targetAmount") String targetAmount,
             @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
+            @Parameter(description = "End date (ISO format)") @RequestParam(value = "endDate", required = false) String endDate,
             @Parameter(description = "Image file. Accepts only one file.") @RequestParam(value = "image", required = false) MultipartFile image) {
         
         try {
@@ -383,6 +394,11 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
                     .category(category)
                     .location(location)
                     .build();
+            
+            // Set end date if provided
+            if (endDate != null && !endDate.trim().isEmpty()) {
+                cause.setEndDate(java.time.LocalDateTime.parse(endDate));
+            }
             
             // Handle image upload if provided
             if (image != null && !image.isEmpty()) {
@@ -421,6 +437,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Target amount") @RequestParam(value = "targetAmount", required = false) String targetAmount,
             @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
+            @Parameter(description = "End date (ISO format)") @RequestParam(value = "endDate", required = false) String endDate,
             @Parameter(description = "Image file. Accepts only one file.") @RequestParam(value = "image", required = false) MultipartFile image) {
         
         try {
@@ -434,6 +451,9 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             if (targetAmount != null) existingCause.setTargetAmount(new java.math.BigDecimal(targetAmount));
             if (category != null) existingCause.setCategory(category);
             if (location != null) existingCause.setLocation(location);
+            if (endDate != null && !endDate.trim().isEmpty()) {
+                existingCause.setEndDate(java.time.LocalDateTime.parse(endDate));
+            }
             
             // Handle image upload if provided
             if (image != null && !image.isEmpty()) {
@@ -477,6 +497,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
             @Parameter(description = "Max participants") @RequestParam(value = "maxParticipants", required = false) String maxParticipants,
             @Parameter(description = "Current participants") @RequestParam(value = "currentParticipants", required = false) String currentParticipants,
+            @Parameter(description = "Event status (UPCOMING, ONGOING, COMPLETED, CANCELLED)") @RequestParam(value = "status", required = false) String status,
             @Parameter(description = "Image file") @RequestParam(value = "image", required = false) MultipartFile image) {
         
         try {
@@ -498,6 +519,11 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
                 event.setCurrentParticipants(Integer.parseInt(currentParticipants));
             } else {
                 event.setCurrentParticipants(0);
+            }
+            
+            // Set status if provided
+            if (status != null && !status.trim().isEmpty()) {
+                event.setStatus(Event.EventStatus.valueOf(status.toUpperCase()));
             }
             
             // Handle image upload if provided
@@ -532,6 +558,7 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             @Parameter(description = "Event date (ISO format)") @RequestParam(value = "eventDate", required = false) String eventDate,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
             @Parameter(description = "Max participants") @RequestParam(value = "maxParticipants", required = false) String maxParticipants,
+            @Parameter(description = "Event status (UPCOMING, ONGOING, COMPLETED, CANCELLED)") @RequestParam(value = "status", required = false) String status,
             @Parameter(description = "Image file (supports only one file)") @RequestParam(value = "image", required = false) MultipartFile image) {
         
         try {
@@ -545,6 +572,9 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
             if (eventDate != null) existingEvent.setEventDate(java.time.LocalDateTime.parse(eventDate));
             if (location != null) existingEvent.setLocation(location);
             if (maxParticipants != null) existingEvent.setMaxParticipants(Integer.parseInt(maxParticipants));
+            if (status != null && !status.trim().isEmpty()) {
+                existingEvent.setStatus(Event.EventStatus.valueOf(status.toUpperCase()));
+            }
             
             // Handle image upload if provided (only one image)
             if (image != null && !image.isEmpty()) {
