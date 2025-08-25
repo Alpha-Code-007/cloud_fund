@@ -17,4 +17,10 @@ public class RootController {
     public String health() {
         return "Donorbox Backend API is running!";
     }
+    
+    @GetMapping("/cors-test")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public String corsTest() {
+        return "CORS is working!";
+    }
 }

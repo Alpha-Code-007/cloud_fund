@@ -16,11 +16,13 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+@Slf4j
 public class SecurityConfig {
 
     @Value("${admin.username:admin}")
@@ -34,6 +36,7 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
+            .headers(headers -> headers.frameOptions().disable()) // For H2 console
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
@@ -102,10 +105,53 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
+        
+        // Get allowed origins from environment variables - NO FALLBACK for security
+        String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+        if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
+            configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
+        } else {
+            // No fallback - reject all requests if no CORS configuration is provided
+            log.warn("No CORS_ALLOWED_ORIGINS environment variable found. CORS will be disabled for security.");
+            configuration.setAllowedOriginPatterns(Arrays.asList()); // Empty list = no origins allowed
+        }
+        
+        // Get allowed methods from environment variable
+        String allowedMethods = System.getenv("CORS_ALLOWED_METHODS");
+        if (allowedMethods != null && !allowedMethods.trim().isEmpty()) {
+            configuration.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
+        } else {
+            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        }
+        
+        // Get allowed headers from environment variable
+        String allowedHeaders = System.getenv("CORS_ALLOWED_HEADERS");
+        if (allowedHeaders != null && !allowedHeaders.trim().isEmpty()) {
+            configuration.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
+        } else {
+            configuration.setAllowedHeaders(Arrays.asList(
+                "Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"
+            ));
+        }
+        
+        // Only expose necessary headers
+        configuration.setExposedHeaders(Arrays.asList("Access-Control-Allow-Origin"));
+        
+        // Allow credentials only if explicitly configured
+        String allowCredentials = System.getenv("CORS_ALLOW_CREDENTIALS");
+        configuration.setAllowCredentials("true".equalsIgnoreCase(allowCredentials));
+        
+        // Set max age from environment variable
+        String maxAge = System.getenv("CORS_MAX_AGE");
+        if (maxAge != null && !maxAge.trim().isEmpty()) {
+            try {
+                configuration.setMaxAge(Long.parseLong(maxAge));
+            } catch (NumberFormatException e) {
+                configuration.setMaxAge(3600L); // Default 1 hour
+            }
+        } else {
+            configuration.setMaxAge(3600L);
+        }
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
