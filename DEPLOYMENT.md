@@ -30,6 +30,8 @@
    - `RAZORPAY_KEY_ID`: Your Razorpay key ID
    - `RAZORPAY_KEY_SECRET`: Your Razorpay secret
    - `ADMIN_EMAIL`: Admin email address
+   - `ADMIN_USERNAME`: Admin username for authentication
+   - `ADMIN_PASSWORD`: Admin password for authentication
 
 4. **Create PostgreSQL Database**
    - Go to "New +" → "PostgreSQL"
@@ -57,6 +59,8 @@
 | `RAZORPAY_KEY_ID` | Razorpay key ID | Yes | - |
 | `RAZORPAY_KEY_SECRET` | Razorpay secret | Yes | - |
 | `ADMIN_EMAIL` | Admin email address | Yes | - |
+| `ADMIN_USERNAME` | Admin username for authentication | Yes | - |
+| `ADMIN_PASSWORD` | Admin password for authentication | Yes | - |
 | `APP_BASE_URL` | Application base URL | No | Auto-generated |
 
 ## 🔧 Troubleshooting

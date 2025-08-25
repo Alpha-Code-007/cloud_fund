@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -115,6 +116,59 @@ emailService.sendSubmissionStatusEmail(adminEmail, adminSubject, adminHtmlConten
 
 return PersonalCauseSubmissionResponse.fromEntity(savedSubmission);
 
+    }
+
+    @Transactional
+    public PersonalCauseSubmissionResponse createSubmissionWithMultipleFiles(PersonalCauseSubmissionRequest request, List<String> imageUrls, List<String> videoUrls, List<String> documentUrls) {
+        PersonalCauseSubmission submission = PersonalCauseSubmission.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .shortDescription(request.getShortDescription())
+                .targetAmount(request.getTargetAmount())
+                .imageUrls(imageUrls != null ? imageUrls : new ArrayList<>())
+                .videoUrls(videoUrls != null ? videoUrls : new ArrayList<>())
+                .proofDocumentUrls(documentUrls != null ? documentUrls : new ArrayList<>())
+                .submitterName(request.getSubmitterName())
+                .submitterEmail(request.getSubmitterEmail())
+                .submitterPhone(request.getSubmitterPhone())
+                .submitterMessage(request.getSubmitterMessage())
+                .category(request.getCategory())
+                .location(request.getLocation())
+                .endDate(request.getEndDate())
+                .status(PersonalCauseSubmission.SubmissionStatus.PENDING)
+                .build();
+        PersonalCauseSubmission savedSubmission = submissionRepository.save(submission);
+
+        // Send email to submitter
+        String subject = "Your Cause Submission is Under Review";
+        String htmlContent = "<p>Thank you, " + request.getSubmitterName() + 
+    ", for submitting your cause titled '<strong>" + request.getTitle() + 
+    "</strong>'. Your submission is under review. We will notify you upon approval or rejection.</p>"
+    + "<br>"
+    + "Best regards,<br>"
+    + "GreenDharti";
+        emailService.sendSubmissionStatusEmail(request.getSubmitterEmail(), subject, htmlContent);
+
+        // Send notification to admin/organization
+        String adminSubject = "New Personal Cause Submission - " + request.getTitle();
+        String adminHtmlContent = "<h3>New Personal Cause Submission</h3>"
+        + "<p>A new personal cause has been submitted for review:</p>"
+        + "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>"
+        + "<p><strong>Title:</strong> " + request.getTitle() + "</p>"
+        + "<p><strong>Submitter:</strong> " + request.getSubmitterName() + " (" + request.getSubmitterEmail() + ")</p>"
+        + "<p><strong>Mobile Number:</strong> " + request.getSubmitterPhone() + "</p>"
+        + "<p><strong>Target Amount:</strong> INR " + request.getTargetAmount() + "</p>"
+        + "<p><strong>Category:</strong> " + (request.getCategory() != null ? request.getCategory() : "Not specified") + "</p>"
+        + "<p><strong>Location:</strong> " + (request.getLocation() != null ? request.getLocation() : "Not specified") + "</p>"
+        + "<p><strong>Description:</strong> " + request.getDescription() + "</p>"
+        + "<p><strong>Images:</strong> " + (imageUrls != null && !imageUrls.isEmpty() ? imageUrls.size() + " images uploaded" : "No images") + "</p>"
+        + "<p><strong>Videos:</strong> " + (videoUrls != null && !videoUrls.isEmpty() ? videoUrls.size() + " videos uploaded" : "No videos") + "</p>"
+        + "<p><strong>Documents:</strong> " + (documentUrls != null && !documentUrls.isEmpty() ? documentUrls.size() + " documents uploaded" : "No documents") + "</p>"
+        + "</div>"
+        + "<p>Please review this submission in the admin dashboard.</p>";
+        emailService.sendSubmissionStatusEmail(adminEmail, adminSubject, adminHtmlContent);
+
+        return PersonalCauseSubmissionResponse.fromEntity(savedSubmission);
     }
 
     @Transactional

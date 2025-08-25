@@ -26,6 +26,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/personal-cause-submissions")
@@ -53,51 +56,61 @@ public class PersonalCauseSubmissionController {
     }
 
     @PostMapping(value = "/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Submit personal cause with media and document", 
-               description = "Submit a personal cause with 2 file inputs: 'media' (image OR video - auto-detected) and 'proofDocument' (PDF, DOC, etc.)")
+    @Operation(summary = "Submit personal cause with multiple media and documents", 
+               description = "Submit a personal cause with multiple file inputs: 'images' (multiple images), 'videos' (multiple videos), and 'documents' (multiple documents)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Cause submission created successfully with media"),
             @ApiResponse(responseCode = "400", description = "Invalid submission data or media upload failed")
     })
     public ResponseEntity<PersonalCauseSubmissionResponse> submitPersonalCauseWithAllMedia(
-            @Parameter(description = "Cause title") @RequestParam("title") String title,
-            @Parameter(description = "Cause description") @RequestParam("description") String description,
+            @Parameter(description = "Cause title", required = true) @RequestParam("title") String title,
+            @Parameter(description = "Cause description", required = true) @RequestParam("description") String description,
             @Parameter(description = "Short description") @RequestParam(value = "shortDescription", required = false) String shortDescription,
-            @Parameter(description = "Target amount") @RequestParam("targetAmount") String targetAmount,
+            @Parameter(description = "Target amount", required = true) @RequestParam("targetAmount") String targetAmount,
             @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
             @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
             @Parameter(description = "End date (ISO format)") @RequestParam(value = "endDate", required = false) String endDate,
-            @Parameter(description = "Submitter name") @RequestParam("submitterName") String submitterName,
-            @Parameter(description = "Submitter email") @RequestParam("submitterEmail") String submitterEmail,
+            @Parameter(description = "Submitter name", required = true) @RequestParam("submitterName") String submitterName,
+            @Parameter(description = "Submitter email", required = true) @RequestParam("submitterEmail") String submitterEmail,
             @Parameter(description = "Submitter phone") @RequestParam(value = "submitterPhone", required = false) String submitterPhone,
             @Parameter(description = "Submitter message") @RequestParam(value = "submitterMessage", required = false) String submitterMessage,
-            @Parameter(description = "Media file (image or video - auto-detected). Accepts only one file: JPG, PNG, GIF, WEBP, MP4, AVI, MOV, WEBM, etc.") @RequestParam(value = "media", required = false) MultipartFile media,
-            @Parameter(description = "Proof document file (PDF, DOC, DOCX, JPG, PNG, etc.). Accepts only one file.") @RequestParam(value = "proofDocument", required = false) MultipartFile proofDocument) {
+            @Parameter(description = "Multiple image files (JPG, PNG, GIF, WEBP, etc.)", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @Parameter(description = "Multiple video files (MP4, AVI, MOV, WEBM, etc.)", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) @RequestParam(value = "videos", required = false) List<MultipartFile> videos,
+            @Parameter(description = "Multiple document files (PDF, DOC, DOCX, JPG, PNG, etc.)", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) @RequestParam(value = "documents", required = false) List<MultipartFile> documents) {
         
         try {
-            String imageUrl = null;
-            String videoUrl = null;
-            String proofDocumentUrl = null;
-            String proofDocumentName = null;
-            String proofDocumentType = null;
+            List<String> imageUrls = new ArrayList<>();
+            List<String> videoUrls = new ArrayList<>();
+            List<String> documentUrls = new ArrayList<>();
             
-            // Handle unified media upload if provided (auto-detects image or video)
-            if (media != null && !media.isEmpty()) {
-                String mediaPath = mediaUploadService.uploadMedia(media, "personal-causes");
-                String fileName = media.getOriginalFilename();
-                
-                if (mediaUploadService.isImageFile(fileName)) {
-                    imageUrl = mediaPath;
-                } else if (mediaUploadService.isVideoFile(fileName)) {
-                    videoUrl = mediaPath;
+            // Handle multiple image uploads
+            if (images != null && !images.isEmpty()) {
+                for (MultipartFile image : images) {
+                    if (image != null && !image.isEmpty()) {
+                        String imagePath = imageUploadService.uploadImage(image, "personal-causes");
+                        imageUrls.add(imagePath);
+                    }
                 }
             }
             
-            // Handle proof document upload if provided (only one document)
-            if (proofDocument != null && !proofDocument.isEmpty()) {
-                proofDocumentUrl = documentUploadService.uploadDocument(proofDocument, "proof-documents");
-                proofDocumentName = proofDocument.getOriginalFilename();
-                proofDocumentType = documentUploadService.getFileExtension(proofDocumentUrl);
+            // Handle multiple video uploads
+            if (videos != null && !videos.isEmpty()) {
+                for (MultipartFile video : videos) {
+                    if (video != null && !video.isEmpty()) {
+                        String videoPath = mediaUploadService.uploadVideo(video, "personal-causes");
+                        videoUrls.add(videoPath);
+                    }
+                }
+            }
+            
+            // Handle multiple document uploads
+            if (documents != null && !documents.isEmpty()) {
+                for (MultipartFile document : documents) {
+                    if (document != null && !document.isEmpty()) {
+                        String documentPath = documentUploadService.uploadDocument(document, "proof-documents");
+                        documentUrls.add(documentPath);
+                    }
+                }
             }
             
             // Create request object
@@ -115,8 +128,8 @@ public class PersonalCauseSubmissionController {
                     .submitterMessage(submitterMessage)
                     .build();
             
-            PersonalCauseSubmissionResponse response = submissionService.createSubmission(
-                    request, imageUrl, videoUrl, proofDocumentUrl, proofDocumentName, proofDocumentType);
+            PersonalCauseSubmissionResponse response = submissionService.createSubmissionWithMultipleFiles(
+                    request, imageUrls, videoUrls, documentUrls);
             
             return new ResponseEntity<>(response, HttpStatus.CREATED);
             
@@ -334,6 +347,66 @@ public class PersonalCauseSubmissionController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @GetMapping("/test")
+    @Operation(summary = "Simple test endpoint", description = "Simple test endpoint to verify API connectivity")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Test successful"),
+            @ApiResponse(responseCode = "400", description = "Test failed")
+    })
+    public ResponseEntity<Map<String, Object>> simpleTest() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "API is working correctly!");
+        response.put("timestamp", java.time.LocalDateTime.now());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/test-multipart", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Test multipart form data", description = "Simple test endpoint to verify multipart form data is working")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Test successful"),
+            @ApiResponse(responseCode = "400", description = "Test failed")
+    })
+    public ResponseEntity<Map<String, Object>> testMultipart(
+            @Parameter(description = "Test title") @RequestParam("title") String title,
+            @Parameter(description = "Test files") @RequestParam(value = "files", required = false) List<MultipartFile> files) {
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("title", title);
+        response.put("fileCount", files != null ? files.size() : 0);
+        response.put("message", "Multipart form data is working correctly!");
+        
+        if (files != null && !files.isEmpty()) {
+            List<String> fileNames = files.stream()
+                    .map(MultipartFile::getOriginalFilename)
+                    .collect(Collectors.toList());
+            response.put("fileNames", fileNames);
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/test-simple", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @Operation(summary = "Test simple form data", description = "Simple test endpoint for form data without files")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Test successful"),
+            @ApiResponse(responseCode = "400", description = "Test failed")
+    })
+    public ResponseEntity<Map<String, Object>> testSimpleForm(
+            @Parameter(description = "Test title") @RequestParam("title") String title,
+            @Parameter(description = "Test description") @RequestParam("description") String description) {
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("title", title);
+        response.put("description", description);
+        response.put("message", "Simple form data is working correctly!");
+        response.put("timestamp", java.time.LocalDateTime.now());
+        
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping

@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -25,6 +26,12 @@ public class PersonalCauseSubmissionResponse {
     private String proofDocumentUrl;
     private String proofDocumentName;
     private String proofDocumentType;
+    
+    // Multiple files support
+    private List<String> imageUrls;
+    private List<String> videoUrls;
+    private List<String> proofDocumentUrls;
+    
     private String category;
     private String location;
     private LocalDateTime endDate;
@@ -65,6 +72,9 @@ public class PersonalCauseSubmissionResponse {
                 .proofDocumentUrl(submission.getProofDocumentUrl())
                 .proofDocumentName(submission.getProofDocumentName())
                 .proofDocumentType(submission.getProofDocumentType())
+                .imageUrls(submission.getImageUrls())
+                .videoUrls(submission.getVideoUrls())
+                .proofDocumentUrls(submission.getProofDocumentUrls())
                 .category(submission.getCategory())
                 .location(submission.getLocation())
                 .endDate(submission.getEndDate())
@@ -104,6 +114,9 @@ public class PersonalCauseSubmissionResponse {
                 .proofDocumentUrl(submission.getProofDocumentUrl())
                 .proofDocumentName(submission.getProofDocumentName())
                 .proofDocumentType(submission.getProofDocumentType())
+                .imageUrls(submission.getImageUrls())
+                .videoUrls(submission.getVideoUrls())
+                .proofDocumentUrls(submission.getProofDocumentUrls())
                 .category(submission.getCategory())
                 .location(submission.getLocation())
                 .endDate(submission.getEndDate())

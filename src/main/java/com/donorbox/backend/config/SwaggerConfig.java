@@ -18,6 +18,9 @@ public class SwaggerConfig {
     @Value("${app.base.url:http://localhost:8080}")
     private String baseUrl;
 
+    @Value("${admin.username:admin}")
+    private String adminUsername;
+
     @Bean
     public OpenAPI donorboxOpenAPI() {
         Server localServer = new Server();
@@ -29,28 +32,24 @@ public class SwaggerConfig {
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("basic")
                 .name("basicAuth")
-                .description("HTTP Basic Authentication. Use 'admin' as username and 'admin123' as password for admin endpoints.");
+                .description("HTTP Basic Authentication.");
 
         // Create security requirement
         SecurityRequirement securityRequirement = new SecurityRequirement()
                 .addList("basicAuth");
 
         Info info = new Info()
-                .title("Donorbox Crowdfunding Platform API")
-                .version("1.0")
-                .description("API documentation for the Donorbox crowdfunding platform backend with international payment support.\n\n" +
-                           "**Authentication:**\n" +
-                           "- Public endpoints (under /api/public) do not require authentication\n" +
-                           "- Admin endpoints (under /admin) require HTTP Basic Authentication\n" +
-                           "- Username: `admin`\n" +
-                           "- Password: `admin123`\n\n" +
-                           "Click the 'Authorize' button below to authenticate for admin endpoints.");
+                .title("DonorBox API")
+                .description("Backend API for DonorBox Crowdfunding Platform")
+                .version("1.0.0")
+                .contact(new io.swagger.v3.oas.models.info.Contact()
+                        .name("DonorBox Team")
+                        .email("support@donorbox.com"));
 
         return new OpenAPI()
                 .info(info)
                 .servers(List.of(localServer))
-                .addSecurityItem(securityRequirement)
-                .components(new Components()
-                        .addSecuritySchemes("basicAuth", basicAuthScheme));
+                .components(new Components().addSecuritySchemes("basicAuth", basicAuthScheme))
+                .addSecurityItem(securityRequirement);
     }
 }
