@@ -43,11 +43,15 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/public/blogs").permitAll()
                 .requestMatchers("/api/public/blogs/**").permitAll()
+                
+                // Static Resources - Allow public access without authentication
                 .requestMatchers("/api/images/**").permitAll()  // Allow public access to images
                 .requestMatchers("/api/documents/**").permitAll() // Allow public access to documents
-                .requestMatchers("/api/personal-cause-submissions/**").permitAll() // Allow public access to personal cause submissions
                 .requestMatchers("/api/media/**").permitAll()    // Allow public access to media
                 .requestMatchers("/uploads/**").permitAll()     // Allow direct access to uploads folder
+                .requestMatchers("/personal-causes/**").permitAll() // Allow public access to personal causes media
+                
+                .requestMatchers("/api/personal-cause-submissions/**").permitAll() // Allow public access to personal cause submissions
                 .requestMatchers("/donate").permitAll()
                 .requestMatchers("/donations").permitAll()
                 .requestMatchers("/causes").permitAll()

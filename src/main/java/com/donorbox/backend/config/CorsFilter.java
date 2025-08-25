@@ -28,6 +28,25 @@ public class CorsFilter implements Filter {
         
         log.info("CORS Filter - Origin: {}, Method: {}, URI: {}", origin, method, requestURI);
         
+        // Skip CORS filtering for static resources (images, videos, documents)
+        if (requestURI.startsWith("/api/images/") || 
+            requestURI.startsWith("/api/documents/") || 
+            requestURI.startsWith("/api/media/") || 
+            requestURI.startsWith("/uploads/") ||
+            requestURI.startsWith("/personal-causes/") ||
+            requestURI.startsWith("/swagger-ui/") ||
+            requestURI.startsWith("/v3/api-docs/") ||
+            requestURI.startsWith("/webjars/")) {
+            log.info("CORS Filter - Skipping CORS for static resource: {}", requestURI);
+            // Add basic CORS headers for static resources to ensure they load properly
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+            response.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, Accept");
+            response.setHeader("Access-Control-Max-Age", "3600");
+            chain.doFilter(req, res);
+            return;
+        }
+        
         // Get CORS configuration from environment variables
         String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
         String allowedMethods = System.getenv("CORS_ALLOWED_METHODS");
