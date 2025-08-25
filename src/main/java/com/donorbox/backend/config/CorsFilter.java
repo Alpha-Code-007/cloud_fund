@@ -52,10 +52,30 @@ public class CorsFilter implements Filter {
                 return;
             }
         } else {
-            // No CORS configuration found - reject all requests for security
-            log.warn("CORS Filter - No CORS configuration found. Rejecting request from origin: {}", origin);
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            return;
+            // Check if we're in production environment
+            String activeProfile = System.getenv("SPRING_PROFILES_ACTIVE");
+            if ("production".equals(activeProfile) || "prod".equals(activeProfile)) {
+                // Production environment - reject all requests if no CORS configuration
+                log.error("CORS_ALLOWED_ORIGINS not set in production environment. CORS will be disabled for security.");
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
+                         } else {
+                 // Development environment - allow localhost and null origins (for Swagger UI)
+                 if (origin == null || origin.startsWith("http://localhost:") || origin.startsWith("https://localhost:")) {
+                     if (origin == null) {
+                         // For null origins (like Swagger UI), set a wildcard or specific origin
+                         response.setHeader("Access-Control-Allow-Origin", "*");
+                         log.info("CORS Filter - Development mode: Allowing null origin (Swagger UI)");
+                     } else {
+                         response.setHeader("Access-Control-Allow-Origin", origin);
+                         log.info("CORS Filter - Development mode: Allowing localhost origin: {}", origin);
+                     }
+                 } else {
+                     log.warn("CORS Filter - Development mode: Origin not allowed: {}", origin);
+                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                     return;
+                 }
+             }
         }
         
         // Set methods from environment variable or default
@@ -76,8 +96,10 @@ public class CorsFilter implements Filter {
         response.setHeader("Access-Control-Max-Age", "3600");
         response.setHeader("Access-Control-Expose-Headers", "Access-Control-Allow-Origin");
         
-        // Set credentials based on environment variable
-        if ("true".equalsIgnoreCase(allowCredentials)) {
+        // Set credentials based on environment variable or development mode
+        String activeProfile = System.getenv("SPRING_PROFILES_ACTIVE");
+        if ("true".equalsIgnoreCase(allowCredentials) || 
+            (!"production".equals(activeProfile) && !"prod".equals(activeProfile))) {
             response.setHeader("Access-Control-Allow-Credentials", "true");
         }
 

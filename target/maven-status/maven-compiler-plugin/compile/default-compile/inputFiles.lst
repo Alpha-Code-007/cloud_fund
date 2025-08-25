@@ -31,6 +31,7 @@ D:\Projects\cloud_fund\src\main\java\com\donorbox\backend\config\SecurityConfig.
 D:\Projects\cloud_fund\src\main\java\com\donorbox\backend\repository\DonationRepository.java
 D:\Projects\cloud_fund\src\main\java\com\donorbox\backend\service\ImageUploadService.java
 D:\Projects\cloud_fund\src\main\java\com\donorbox\backend\dto\BlogRequest.java
+D:\Projects\cloud_fund\src\main\java\com\donorbox\backend\config\CorsFilter.java
 D:\Projects\cloud_fund\src\main\java\com\donorbox\backend\exception\GlobalExceptionHandler.java
 D:\Projects\cloud_fund\src\main\java\com\donorbox\backend\dto\PaymentVerificationRequest.java
 D:\Projects\cloud_fund\src\main\java\com\donorbox\backend\entity\PersonalCauseSubmission.java

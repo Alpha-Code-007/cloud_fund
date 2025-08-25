@@ -25,10 +25,10 @@ import java.util.Arrays;
 @Slf4j
 public class SecurityConfig {
 
-    @Value("${admin.username:admin}")
+    @Value("${admin.username}")
     private String adminUsername;
 
-    @Value("${admin.password:admin123}")
+    @Value("${admin.password}")
     private String adminPassword;
 
     @Bean
@@ -88,6 +88,9 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
+        // @Value injection is working correctly now
+        log.info("Creating admin user with username: {}", adminUsername);
+        
         UserDetails admin = User.builder()
                 .username(adminUsername)
                 .password(passwordEncoder().encode(adminPassword))

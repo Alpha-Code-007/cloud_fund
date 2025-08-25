@@ -66,6 +66,7 @@ com\donorbox\backend\entity\Cause$MediaType.class
 com\donorbox\backend\entity\Event.class
 com\donorbox\backend\controller\ImageController.class
 com\donorbox\backend\service\ContactService.class
+com\donorbox\backend\config\CorsFilter.class
 com\donorbox\backend\dto\DonationRequest.class
 com\donorbox\backend\entity\User$UserRole.class
 com\donorbox\backend\entity\User$UserBuilder.class
