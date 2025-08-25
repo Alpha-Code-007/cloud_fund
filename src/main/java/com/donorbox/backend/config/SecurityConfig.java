@@ -106,14 +106,26 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Get allowed origins from environment variables - NO FALLBACK for security
+        // Get allowed origins from environment variables
         String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
         if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
             configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
+            log.info("CORS configured with allowed origins: {}", allowedOrigins);
         } else {
-            // No fallback - reject all requests if no CORS configuration is provided
-            log.warn("No CORS_ALLOWED_ORIGINS environment variable found. CORS will be disabled for security.");
-            configuration.setAllowedOriginPatterns(Arrays.asList()); // Empty list = no origins allowed
+            // Check if we're in production environment
+            String activeProfile = System.getenv("SPRING_PROFILES_ACTIVE");
+            if ("production".equals(activeProfile) || "prod".equals(activeProfile)) {
+                // Production environment - reject all requests if no CORS configuration
+                log.error("CORS_ALLOWED_ORIGINS not set in production environment. CORS will be disabled for security.");
+                configuration.setAllowedOriginPatterns(Arrays.asList()); // Empty list = no origins allowed
+            } else {
+                // Development environment - allow localhost
+                log.info("No CORS_ALLOWED_ORIGINS environment variable found. Using localhost fallback for development.");
+                configuration.setAllowedOriginPatterns(Arrays.asList(
+                    "http://localhost:*",
+                    "https://localhost:*"
+                ));
+            }
         }
         
         // Get allowed methods from environment variable
@@ -137,9 +149,16 @@ public class SecurityConfig {
         // Only expose necessary headers
         configuration.setExposedHeaders(Arrays.asList("Access-Control-Allow-Origin"));
         
-        // Allow credentials only if explicitly configured
+        // Allow credentials - secure by default
         String allowCredentials = System.getenv("CORS_ALLOW_CREDENTIALS");
-        configuration.setAllowCredentials("true".equalsIgnoreCase(allowCredentials));
+        String activeProfile = System.getenv("SPRING_PROFILES_ACTIVE");
+        if ("production".equals(activeProfile) || "prod".equals(activeProfile)) {
+            // Production - only allow credentials if explicitly configured
+            configuration.setAllowCredentials("true".equalsIgnoreCase(allowCredentials));
+        } else {
+            // Development - default to true for convenience
+            configuration.setAllowCredentials(allowCredentials == null || "true".equalsIgnoreCase(allowCredentials));
+        }
         
         // Set max age from environment variable
         String maxAge = System.getenv("CORS_MAX_AGE");

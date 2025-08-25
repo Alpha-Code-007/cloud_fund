@@ -36,7 +36,7 @@ public class WebConfig implements WebMvcConfigurer {
         String allowCredentials = System.getenv("CORS_ALLOW_CREDENTIALS");
         String maxAge = System.getenv("CORS_MAX_AGE");
         
-        // Only configure CORS if environment variables are provided
+        // Configure CORS with fallback for local development
         if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
             registry.addMapping("/**")
                     .allowedOriginPatterns(allowedOrigins.split(","))
@@ -48,8 +48,15 @@ public class WebConfig implements WebMvcConfigurer {
                     .allowCredentials("true".equalsIgnoreCase(allowCredentials))
                     .maxAge(maxAge != null ? Long.parseLong(maxAge) : 3600);
         } else {
-            // No CORS configuration - log warning
-            System.out.println("WARNING: No CORS_ALLOWED_ORIGINS environment variable found. CORS will be disabled for security.");
+            // Fallback for local development
+            registry.addMapping("/**")
+                    .allowedOriginPatterns("http://localhost:*", "https://localhost:*")
+                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                    .allowedHeaders("Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With")
+                    .exposedHeaders("Access-Control-Allow-Origin")
+                    .allowCredentials(true)
+                    .maxAge(3600);
+            System.out.println("INFO: Using localhost CORS fallback for local development.");
         }
     }
 }
