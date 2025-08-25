@@ -140,7 +140,7 @@ public class SecurityConfig {
         if (allowedMethods != null && !allowedMethods.trim().isEmpty()) {
             configuration.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
         } else {
-            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         }
         
         // Get allowed headers from environment variable

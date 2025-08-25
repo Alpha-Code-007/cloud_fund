@@ -32,69 +32,57 @@ public class CorsFilter implements Filter {
         if (requestURI.startsWith("/api/images/") || 
             requestURI.startsWith("/api/documents/") || 
             requestURI.startsWith("/api/media/") || 
+            requestURI.startsWith("/api/causes/") || 
             requestURI.startsWith("/uploads/") ||
             requestURI.startsWith("/personal-causes/") ||
             requestURI.startsWith("/swagger-ui/") ||
             requestURI.startsWith("/v3/api-docs/") ||
             requestURI.startsWith("/webjars/")) {
             log.info("CORS Filter - Skipping CORS for static resource: {}", requestURI);
-            // Add basic CORS headers for static resources to ensure they load properly
+            // Add comprehensive CORS headers for static resources to ensure they load properly
             response.setHeader("Access-Control-Allow-Origin", "*");
-            response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-            response.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, Accept");
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            response.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-Requested-With, Cache-Control");
+            response.setHeader("Access-Control-Expose-Headers", "Access-Control-Allow-Origin");
             response.setHeader("Access-Control-Max-Age", "3600");
             chain.doFilter(req, res);
             return;
         }
         
-        // Get CORS configuration from environment variables
+        // Simplified CORS configuration for development
+        String activeProfile = System.getenv("SPRING_PROFILES_ACTIVE");
         String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
         String allowedMethods = System.getenv("CORS_ALLOWED_METHODS");
         String allowedHeaders = System.getenv("CORS_ALLOWED_HEADERS");
         String allowCredentials = System.getenv("CORS_ALLOW_CREDENTIALS");
         
-        // Set CORS headers based on environment configuration
-        if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
-            String[] origins = allowedOrigins.split(",");
-            boolean originAllowed = false;
-            for (String allowedOrigin : origins) {
-                if (origin != null && origin.matches(allowedOrigin.trim().replace("*", ".*"))) {
-                    response.setHeader("Access-Control-Allow-Origin", origin);
-                    originAllowed = true;
-                    log.info("CORS Filter - Setting origin to: {}", origin);
-                    break;
-                }
-            }
-            if (!originAllowed) {
-                log.warn("CORS Filter - Origin not allowed: {}", origin);
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                return;
-            }
+        // In development mode, allow everything for easier testing
+        if (!"production".equals(activeProfile) && !"prod".equals(activeProfile)) {
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            log.info("CORS Filter - Development mode: Allowing all origins for: {}", requestURI);
         } else {
-            // Check if we're in production environment
-            String activeProfile = System.getenv("SPRING_PROFILES_ACTIVE");
-            if ("production".equals(activeProfile) || "prod".equals(activeProfile)) {
-                // Production environment - reject all requests if no CORS configuration
+            // Production mode - use strict CORS configuration
+            if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
+                String[] origins = allowedOrigins.split(",");
+                boolean originAllowed = false;
+                for (String allowedOrigin : origins) {
+                    if (origin != null && origin.matches(allowedOrigin.trim().replace("*", ".*"))) {
+                        response.setHeader("Access-Control-Allow-Origin", origin);
+                        originAllowed = true;
+                        log.info("CORS Filter - Production: Setting origin to: {}", origin);
+                        break;
+                    }
+                }
+                if (!originAllowed) {
+                    log.warn("CORS Filter - Production: Origin not allowed: {}", origin);
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    return;
+                }
+            } else {
                 log.error("CORS_ALLOWED_ORIGINS not set in production environment. CORS will be disabled for security.");
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 return;
-                         } else {
-                 // Development environment - allow localhost and null origins (for Swagger UI)
-                 if (origin == null || origin.startsWith("http://localhost:") || origin.startsWith("https://localhost:")) {
-                     if (origin == null) {
-                         // For null origins (like Swagger UI), set a wildcard or specific origin
-                         response.setHeader("Access-Control-Allow-Origin", "*");
-                         log.info("CORS Filter - Development mode: Allowing null origin (Swagger UI)");
-                     } else {
-                         response.setHeader("Access-Control-Allow-Origin", origin);
-                         log.info("CORS Filter - Development mode: Allowing localhost origin: {}", origin);
-                     }
-                 } else {
-                     log.warn("CORS Filter - Development mode: Origin not allowed: {}", origin);
-                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                     return;
-                 }
-             }
+            }
         }
         
         // Set methods from environment variable or default
@@ -109,14 +97,31 @@ public class CorsFilter implements Filter {
             response.setHeader("Access-Control-Allow-Headers", allowedHeaders);
         } else {
             response.setHeader("Access-Control-Allow-Headers", 
-                "Origin, Content-Type, Accept, Authorization, X-Requested-With");
+                "Origin, Content-Type, Accept, Authorization, X-Requested-With, Cache-Control");
         }
         
         response.setHeader("Access-Control-Max-Age", "3600");
         response.setHeader("Access-Control-Expose-Headers", "Access-Control-Allow-Origin");
         
+        // Special handling for admin endpoints to ensure they work with Swagger
+        if (requestURI.startsWith("/admin/")) {
+            response.setHeader("Access-Control-Allow-Headers", 
+                "Origin, Content-Type, Accept, Authorization, X-Requested-With, Cache-Control");
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        }
+        
+        // Special handling for personal cause endpoints to ensure they work with Swagger
+        if (requestURI.startsWith("/api/personal-cause-submissions/")) {
+            response.setHeader("Access-Control-Allow-Headers", 
+                "Origin, Content-Type, Accept, Authorization, X-Requested-With, Cache-Control");
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            // Ensure personal cause endpoints always get proper CORS headers
+            if (response.getHeader("Access-Control-Allow-Origin") == null) {
+                response.setHeader("Access-Control-Allow-Origin", "*");
+            }
+        }
+        
         // Set credentials based on environment variable or development mode
-        String activeProfile = System.getenv("SPRING_PROFILES_ACTIVE");
         if ("true".equalsIgnoreCase(allowCredentials) || 
             (!"production".equals(activeProfile) && !"prod".equals(activeProfile))) {
             response.setHeader("Access-Control-Allow-Credentials", "true");

@@ -23,8 +23,8 @@ public class CauseResponse {
     private String shortDescription;
     private BigDecimal targetAmount;
     private BigDecimal currentAmount;
-    private String imageUrl;
-    private String videoUrl;
+    private java.util.List<String> imageUrls;
+    private java.util.List<String> videoUrls;
     private Cause.MediaType mediaType;
     private Cause.CauseStatus status;
     private String category;
@@ -54,8 +54,8 @@ public class CauseResponse {
                 .shortDescription(cause.getShortDescription())
                 .targetAmount(cause.getTargetAmount())
                 .currentAmount(cause.getCurrentAmount())
-                .imageUrl(cause.getImageUrl())
-                .videoUrl(cause.getVideoUrl())
+                .imageUrls(cause.getImageUrls())
+                .videoUrls(cause.getVideoUrls())
                 .mediaType(cause.getMediaType())
                 .status(cause.getStatus())
                 .category(cause.getCategory())
@@ -67,8 +67,8 @@ public class CauseResponse {
 
         // Calculate computed fields
         response.setProgressPercentage(calculateProgressPercentage(cause));
-        response.setHasImage(cause.getImageUrl() != null && !cause.getImageUrl().trim().isEmpty());
-        response.setHasVideo(cause.getVideoUrl() != null && !cause.getVideoUrl().trim().isEmpty());
+        response.setHasImage(cause.getImageUrls() != null && !cause.getImageUrls().isEmpty());
+        response.setHasVideo(cause.getVideoUrls() != null && !cause.getVideoUrls().isEmpty());
         response.setIsActive(cause.getStatus() == Cause.CauseStatus.ACTIVE);
         response.setIsCompleted(cause.getStatus() == Cause.CauseStatus.COMPLETED);
         response.setDaysRemaining(calculateDaysRemaining(cause));
@@ -88,8 +88,8 @@ public class CauseResponse {
                 .shortDescription(cause.getShortDescription())
                 .targetAmount(cause.getTargetAmount())
                 .currentAmount(cause.getCurrentAmount())
-                .imageUrl(cause.getImageUrl())
-                .videoUrl(cause.getVideoUrl())
+                .imageUrls(cause.getImageUrls())
+                .videoUrls(cause.getVideoUrls())
                 .mediaType(cause.getMediaType())
                 .status(cause.getStatus())
                 .category(cause.getCategory())
@@ -100,8 +100,8 @@ public class CauseResponse {
 
         // Calculate computed fields
         response.setProgressPercentage(calculateProgressPercentage(cause));
-        response.setHasImage(cause.getImageUrl() != null && !cause.getImageUrl().trim().isEmpty());
-        response.setHasVideo(cause.getVideoUrl() != null && !cause.getVideoUrl().trim().isEmpty());
+        response.setHasImage(cause.getImageUrls() != null && !cause.getImageUrls().isEmpty());
+        response.setHasVideo(cause.getVideoUrls() != null && !cause.getVideoUrls().isEmpty());
         response.setIsActive(cause.getStatus() == Cause.CauseStatus.ACTIVE);
         response.setIsCompleted(cause.getStatus() == Cause.CauseStatus.COMPLETED);
         response.setDaysRemaining(calculateDaysRemaining(cause));

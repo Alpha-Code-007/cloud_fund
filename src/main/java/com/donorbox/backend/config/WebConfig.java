@@ -31,6 +31,11 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:" + Paths.get(uploadDir).toAbsolutePath().toString() + "/")
                 .setCachePeriod(3600); // Cache for 1 hour
         
+        // Serve causes folder specifically for video access
+        registry.addResourceHandler("/api/causes/**")
+                .addResourceLocations("file:" + Paths.get(uploadDir).toAbsolutePath().toString() + "/")
+                .setCachePeriod(3600); // Cache for 1 hour
+        
         // Serve personal-causes files as static content
         registry.addResourceHandler("/personal-causes/**")
                 .addResourceLocations("file:" + Paths.get(uploadDir).toAbsolutePath().toString() + "/")
