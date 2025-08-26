@@ -18,7 +18,7 @@ public class DonationStatusMonitoringService {
     private final DonationService donationService;
     private final PaymentService paymentService;
 
-    @Value("${admin.email:testing@alphaseam.com}")
+    @Value("${admin.email}")
     private String adminEmail;
 
     /**

@@ -14,7 +14,7 @@ public class ContactService {
     private final MessageRepository messageRepository;
     private final EmailService emailService;
 
-    @Value("${admin.email:testing@alphaseam.com}")
+    @Value("${admin.email}")
     private String adminEmail;
 
     @Transactional

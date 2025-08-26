@@ -16,7 +16,7 @@ public class VolunteerService {
     private final VolunteerRepository volunteerRepository;
     private final EmailService emailService;
 
-    @Value("${admin.email:testing@alphaseam.com}")
+    @Value("${admin.email}")
     private String adminEmail;
 
     @Transactional

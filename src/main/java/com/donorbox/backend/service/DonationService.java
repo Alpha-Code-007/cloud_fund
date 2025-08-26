@@ -22,7 +22,7 @@ public class DonationService {
     private final EmailSchedulerService emailSchedulerService;
     private final EmailService emailService;
 
-    @Value("${admin.email:testing@alphaseam.com}")
+    @Value("${admin.email}")
     private String adminEmail;
 
     @Transactional

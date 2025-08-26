@@ -55,7 +55,7 @@ public class AdminController {
     private final EmailService emailService;
     private final DonationStatusMonitoringService monitoringService;
 
-    @Value("${admin.email:testing@alphaseam.com}")
+    @Value("${admin.email}")
     private String adminEmail;
 
     // Admin Causes Management

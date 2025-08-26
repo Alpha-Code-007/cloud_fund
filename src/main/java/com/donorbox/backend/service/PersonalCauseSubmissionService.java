@@ -23,7 +23,7 @@ public class PersonalCauseSubmissionService {
     private final CauseRepository causeRepository;
     private final EmailService emailService;
 
-    @Value("${admin.email:testing@alphaseam.com}")
+    @Value("${admin.email}")
     private String adminEmail;
 
     public List<PersonalCauseSubmissionResponse> getAllSubmissions() {
