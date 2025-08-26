@@ -149,6 +149,25 @@ public class CorsFilter implements Filter {
             }
         }
 
+        // Special handling: /admin/causes/with-media
+        if (requestURI.startsWith("/admin/causes/with-media")) {
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            response.setHeader("Access-Control-Allow-Headers",
+                    "Origin, Content-Type, Accept, Authorization, X-Requested-With, Cache-Control");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.setHeader("Access-Control-Max-Age", "3600");
+            response.setHeader("Access-Control-Expose-Headers", "Access-Control-Allow-Origin");
+
+            log.info("CORS Filter - Admin Causes/With-Media: Applied headers for {}", requestURI);
+
+            if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                log.info("CORS Filter - Preflight OPTIONS for {}", requestURI);
+                response.setStatus(HttpServletResponse.SC_OK);
+                return;
+            }
+        }
+
         // Special Swagger/personal-cause
         if (requestURI.startsWith("/api/personal-cause-submissions/") ||
                 requestURI.startsWith("/v3/api-docs") ||

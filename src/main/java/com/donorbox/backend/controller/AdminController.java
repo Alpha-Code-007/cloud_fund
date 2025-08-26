@@ -513,6 +513,203 @@ public ResponseEntity<CauseResponse> createCause(@Valid @RequestBody CauseReques
         }
     }
 
+    // Create cause with multiple photos and videos (multipart form)
+    @PostMapping(value = "/causes/with-media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Admin - Create cause with multiple photos and videos", description = "Create a new cause with multiple photo and video uploads")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Cause created successfully with media"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data or media upload failed")
+    })
+    public ResponseEntity<Cause> createCauseWithMedia(
+            @Parameter(description = "Cause title") @RequestParam("title") String title,
+            @Parameter(description = "Cause description") @RequestParam("description") String description,
+            @Parameter(description = "Short description") @RequestParam(value = "shortDescription", required = false) String shortDescription,
+            @Parameter(description = "Target amount") @RequestParam("targetAmount") String targetAmount,
+            @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
+            @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
+            @Parameter(description = "End date (ISO format)") @RequestParam(value = "endDate", required = false) String endDate,
+            @Parameter(description = "Multiple image files (JPG, PNG, GIF, WEBP, etc.)", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @Parameter(description = "Multiple video files (MP4, AVI, MOV, WEBM, etc.)", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) @RequestParam(value = "videos", required = false) List<MultipartFile> videos) {
+
+        try {
+            // Create cause object
+            Cause cause = Cause.builder()
+                    .title(title)
+                    .description(description)
+                    .shortDescription(shortDescription)
+                    .targetAmount(new java.math.BigDecimal(targetAmount))
+                    .category(category)
+                    .location(location)
+                    .build();
+            
+            // Set end date if provided
+            if (endDate != null && !endDate.trim().isEmpty()) {
+                cause.setEndDate(java.time.LocalDateTime.parse(endDate));
+            }
+
+            // Handle image uploads if provided
+            if (images != null && !images.isEmpty()) {
+                List<String> imageUrls = new ArrayList<>();
+                
+                for (MultipartFile image : images) {
+                    if (image != null && !image.isEmpty()) {
+                        // Upload image
+                        String imagePath = mediaUploadService.uploadImage(image, "causes");
+                        imageUrls.add(imagePath);
+                    }
+                }
+                
+                if (!imageUrls.isEmpty()) {
+                    cause.setImageUrls(imageUrls);
+                }
+            }
+
+            // Handle video uploads if provided
+            if (videos != null && !videos.isEmpty()) {
+                List<String> videoUrls = new ArrayList<>();
+                
+                for (MultipartFile video : videos) {
+                    if (video != null && !video.isEmpty()) {
+                        // Upload video
+                        String videoPath = mediaUploadService.uploadVideo(video, "causes");
+                        videoUrls.add(videoPath);
+                    }
+                }
+                
+                if (!videoUrls.isEmpty()) {
+                    cause.setVideoUrls(videoUrls);
+                }
+            }
+
+            // Set media type based on what was uploaded
+            if ((images != null && !images.isEmpty()) && (videos != null && !videos.isEmpty())) {
+                cause.setMediaType(Cause.MediaType.BOTH);
+            } else if (images != null && !images.isEmpty()) {
+                cause.setMediaType(Cause.MediaType.IMAGE);
+            } else if (videos != null && !videos.isEmpty()) {
+                cause.setMediaType(Cause.MediaType.VIDEO);
+            } else {
+                cause.setMediaType(Cause.MediaType.NONE);
+            }
+
+            Cause createdCause = causeService.createCause(cause);
+            return new ResponseEntity<>(createdCause, HttpStatus.CREATED);
+
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // Update cause with multiple photos and videos (multipart form)
+    @PutMapping(value = "/causes/{id}/with-media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Admin - Update cause with multiple photos and videos", description = "Update an existing cause with optional multiple photo and video uploads")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cause updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Cause not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    public ResponseEntity<Cause> updateCauseWithMedia(
+            @Parameter(description = "ID of the cause to update") @PathVariable Long id,
+            @Parameter(description = "Cause title") @RequestParam(value = "title", required = false) String title,
+            @Parameter(description = "Cause description") @RequestParam(value = "description", required = false) String description,
+            @Parameter(description = "Short description") @RequestParam(value = "shortDescription", required = false) String shortDescription,
+            @Parameter(description = "Target amount") @RequestParam(value = "targetAmount", required = false) String targetAmount,
+            @Parameter(description = "Category") @RequestParam(value = "category", required = false) String category,
+            @Parameter(description = "Location") @RequestParam(value = "location", required = false) String location,
+            @Parameter(description = "End date (ISO format)") @RequestParam(value = "endDate", required = false) String endDate,
+            @Parameter(description = "Multiple image files (JPG, PNG, GIF, WEBP, etc.)", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @Parameter(description = "Multiple video files (MP4, AVI, MOV, WEBM, etc.)", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) @RequestParam(value = "videos", required = false) List<MultipartFile> videos) {
+
+        try {
+            // Get existing cause
+            Cause existingCause = causeService.getCauseEntityById(id);
+
+            // Update fields if provided
+            if (title != null) existingCause.setTitle(title);
+            if (description != null) existingCause.setDescription(description);
+            if (shortDescription != null) existingCause.setShortDescription(shortDescription);
+            if (targetAmount != null) existingCause.setTargetAmount(new java.math.BigDecimal(targetAmount));
+            if (category != null) existingCause.setCategory(category);
+            if (location != null) existingCause.setLocation(location);
+            if (endDate != null && !endDate.trim().isEmpty()) {
+                existingCause.setEndDate(java.time.LocalDateTime.parse(endDate));
+            }
+
+            // Handle image uploads if provided
+            if (images != null && !images.isEmpty()) {
+                // Delete old images if exist
+                if (existingCause.getImageUrls() != null) {
+                    for (String oldImageUrl : existingCause.getImageUrls()) {
+                        if (oldImageUrl != null) {
+                            mediaUploadService.deleteMedia(oldImageUrl);
+                        }
+                    }
+                }
+
+                List<String> imageUrls = new ArrayList<>();
+                
+                for (MultipartFile image : images) {
+                    if (image != null && !image.isEmpty()) {
+                        // Upload image
+                        String imagePath = mediaUploadService.uploadImage(image, "causes");
+                        imageUrls.add(imagePath);
+                    }
+                }
+                
+                if (!imageUrls.isEmpty()) {
+                    existingCause.setImageUrls(imageUrls);
+                }
+            }
+
+            // Handle video uploads if provided
+            if (videos != null && !videos.isEmpty()) {
+                // Delete old videos if exist
+                if (existingCause.getVideoUrls() != null) {
+                    for (String oldVideoUrl : existingCause.getVideoUrls()) {
+                        if (oldVideoUrl != null) {
+                            mediaUploadService.deleteMedia(oldVideoUrl);
+                        }
+                    }
+                }
+
+                List<String> videoUrls = new ArrayList<>();
+                
+                for (MultipartFile video : videos) {
+                    if (video != null && !video.isEmpty()) {
+                        // Upload video
+                        String videoPath = mediaUploadService.uploadVideo(video, "causes");
+                        videoUrls.add(videoPath);
+                    }
+                }
+                
+                if (!videoUrls.isEmpty()) {
+                    existingCause.setVideoUrls(videoUrls);
+                }
+            }
+
+            // Set media type based on what was uploaded
+            if ((images != null && !images.isEmpty()) && (videos != null && !videos.isEmpty())) {
+                existingCause.setMediaType(Cause.MediaType.BOTH);
+            } else if (images != null && !images.isEmpty()) {
+                existingCause.setMediaType(Cause.MediaType.IMAGE);
+            } else if (videos != null && !videos.isEmpty()) {
+                existingCause.setMediaType(Cause.MediaType.VIDEO);
+            } else {
+                existingCause.setMediaType(Cause.MediaType.NONE);
+            }
+
+            Cause updatedCause = causeService.updateCause(id, existingCause);
+            return ResponseEntity.ok(updatedCause);
+
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
      // Create event with image upload (multipart form)
     
     @PostMapping(value = "/events/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
