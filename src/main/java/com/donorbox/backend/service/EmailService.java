@@ -154,7 +154,7 @@ public class EmailService {
                 <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                 <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
                     <h1 style='color: #2c5aa0; text-align: center;'>%s</h1>
-                    <p>A new donation has been processed through the DonorBox platform with the following status:</p>
+                    <p>A new donation has been successfully processed on the Green Dharti platform with the following status:</p>
                     <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
                         <h3 style='margin-top: 0; color: #2c5aa0;'>Donation Details:</h3>
                         <p><strong>Donor Name:</strong> %s</p>
