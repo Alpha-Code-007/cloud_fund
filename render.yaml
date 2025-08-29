@@ -6,6 +6,9 @@ services:
     region: oregon
     healthCheckPath: /health
     envVars:
+      # ==============================
+      # DATABASE CONFIGURATION
+      # ==============================
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
           name: donorbox-db
@@ -18,14 +21,20 @@ services:
         fromDatabase:
           name: donorbox-db
           property: password
-      - key: SPRING_PROFILES_ACTIVE
-        value: production
-      - key: SERVER_PORT
-        value: 8080
-      - key: JWT_SECRET
-        generateValue: true
-      - key: JWT_EXPIRATION
-        value: 86400
+      - key: SPRING_DATASOURCE_DRIVER
+        value: org.postgresql.Driver
+      
+      # ==============================
+      # JPA CONFIGURATION
+      # ==============================
+      - key: SPRING_JPA_SHOW_SQL
+        value: false
+      - key: SPRING_JPA_HIBERNATE_DIALECT
+        value: org.hibernate.dialect.PostgreSQLDialect
+      
+      # ==============================
+      # EMAIL CONFIGURATION
+      # ==============================
       - key: MAIL_HOST
         value: mail.alphaseam.com
       - key: MAIL_PORT
@@ -34,14 +43,61 @@ services:
         sync: false
       - key: MAIL_PASSWORD
         sync: false
+      
+      # ==============================
+      # RAZORPAY CONFIGURATION
+      # ==============================
       - key: RAZORPAY_KEY_ID
         sync: false
       - key: RAZORPAY_KEY_SECRET
         sync: false
+      
+      # ==============================
+      # JWT CONFIGURATION
+      # ==============================
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION
+        value: 86400
+      
+      # ==============================
+      # SERVER CONFIGURATION
+      # ==============================
+      - key: SERVER_PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      
+      # ==============================
+      # ADMIN CONFIGURATION
+      # ==============================
       - key: ADMIN_EMAIL
         sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      
+      # ==============================
+      # APP CONFIGURATION
+      # ==============================
       - key: APP_BASE_URL
         value: https://donorbox-backend.onrender.com
+      
+      # ==============================
+      # CORS CONFIGURATION
+      # ==============================
+      - key: CORS_ALLOWED_ORIGINS
+        value: "*"
+      - key: CORS_ALLOWED_METHODS
+        value: "GET,POST,PUT,DELETE,OPTIONS"
+      - key: CORS_ALLOWED_HEADERS
+        value: "*"
+      - key: CORS_ALLOW_CREDENTIALS
+        value: "true"
+      - key: CORS_MAX_AGE
+        value: "3600"
+      
     buildCommand: mvn clean package -DskipTests
     startCommand: java -jar target/donorbox-backend-0.0.1-SNAPSHOT.jar
 
